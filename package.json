@@ -1,0 +1,19 @@
+{
+  "author": "ctide <christide@christide.com> (http://www.github.com/ctide)",
+  "name": "node-fakeweb",
+  "description": "Fakeweb implementation in node for testing HTTP requests",
+  "version": "0.0.1",
+  "homepage": "http://www.github.com/ctide/fakeweb",
+  "repository": {
+    "type": "git",
+    "url": "http://www.github.com/ctide/fakeweb.git"
+  },
+  "main": "fakeweb.js",
+  "engines": {
+    "node": "~v0.4.11"
+  },
+  "dependencies": {
+    "request": "=2.1.1"
+  },
+  "devDependencies": {}
+}
