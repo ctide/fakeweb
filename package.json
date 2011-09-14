@@ -15,5 +15,7 @@
   "dependencies": {
     "request": "=2.1.1"
   },
-  "devDependencies": {}
+  "devDependencies": {
+    "vows": "latest"
+  }
 }

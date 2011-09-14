@@ -13,6 +13,7 @@ var fs = require('fs')
 
 
 function interceptable(uri) {
+    uri = parseUrl(uri);
     if (interceptedUris[uri]) {
         return true;
     }
@@ -137,15 +138,7 @@ function Fakeweb() {
     }
 
     registerUri = function(options) {
-        var tempUrl = url.parse(options.uri);
-        if (!tempUrl.port) {
-            if (tempUrl.protocol === 'http:') {
-                tempUrl.port = 80;
-            } else if (tempUrl.protocol === 'https:') {
-                tempUrl.port = 443;
-            }
-            options.uri = url.format(tempUrl);
-        }
+        options.uri = parseUrl(options.uri);
         interceptedUris[options.uri] = {};
         if (options.file) {
             interceptedUris[options.uri].response = fs.readFileSync(options.file);
@@ -157,10 +150,23 @@ function Fakeweb() {
     }
 
     ignoreUri = function(options) {
-        ignoredUris[options.uri] = true;
+        ignoredUris[parseUrl(options.uri)] = true;
     }
 
     return this;
 };
 
 module.exports = Fakeweb();
+
+
+function parseUrl(uri) {
+    var tempUrl = url.parse(uri);
+    if (!tempUrl.port) {
+        if (tempUrl.protocol === 'http:') {
+            tempUrl.port = 80;
+        } else if (tempUrl.protocol === 'https:') {
+            tempUrl.port = 443;
+        }
+    }
+    return url.format(tempUrl);
+}
