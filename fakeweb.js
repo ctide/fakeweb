@@ -137,6 +137,15 @@ function Fakeweb() {
     }
 
     registerUri = function(options) {
+        var tempUrl = url.parse(options.uri);
+        if (!tempUrl.port) {
+            if (tempUrl.protocol === 'http:') {
+                tempUrl.port = 80;
+            } else if (tempUrl.protocol === 'https:') {
+                tempUrl.port = 443;
+            }
+            options.uri = url.format(tempUrl);
+        }
         interceptedUris[options.uri] = {};
         if (options.file) {
             interceptedUris[options.uri].response = fs.readFileSync(options.file);
