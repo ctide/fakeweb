@@ -10,7 +10,7 @@
   },
   "main": "fakeweb.js",
   "engines": {
-    "node": "0.4"
+    "node": ">=0.4"
   },
   "dependencies": {
     "request": "=2.1.1"
