@@ -20,7 +20,7 @@ var output = function(err, resp, body) { console.log(body); }
 
 fakeweb.allowNetConnect = false;
 fakeweb.registerUri({uri: 'http://www.testing.com:80/', body: 'Hello!'});
-request.get({uri: 'http://www.testing.com/'}, output);
+request.get({uri: 'http://www.testing.com:80/'}, output);
 ```
 
 This will output:
