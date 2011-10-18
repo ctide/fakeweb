@@ -49,6 +49,7 @@ function httpModuleRequest(uri, callback) {
         };
         thisResponse.statusCode = interceptedUris[uri].statusCode;
         if (interceptedUris[uri].contentType) {
+            thisResponse.headers = {};
             thisResponse.headers['content-type'] = interceptedUris[uri].contentType;
         }
         thisRequest.emit('response', thisResponse);

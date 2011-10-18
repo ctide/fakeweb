@@ -67,5 +67,35 @@ vows.describe('Fakeweb').addBatch({
     'will allow connections to URLs specifically defined as ignored when allowNetConnect is off' : function() {
         fakeweb.ignoreUri({uri: 'http://www.google.com:80/'});
         assert.doesNotThrow(function() { request.get({uri: 'http://www.google.com:80/'}, function() {} ); });
+    },
+    'will set content type ' : {
+        'with request' : {
+            topic: function() {
+                fakeweb.registerUri({uri: 'http://www.contenttype.com:80/', body: 'body', contentType: 'testing'});
+                request.get({uri: 'http://www.contenttype.com:80/'}, this.callback); },
+            "correctly on the response" : function(err, resp, body) {
+                assert.equal(resp.headers['content-type'], 'testing');
+            }
+        },
+        'with http' : {
+            topic: function() {
+                fakeweb.registerUri({uri: 'http://www.contenttype.com:80/', body: 'body', contentType: 'testing'});
+                var self = this;
+                var data = '';
+                var req = http.request({host: 'www.contenttype.com', port: '80', path: '/', method: 'GET'}, function(res) {
+                    res.on('data', function(chunk) {
+                        data += chunk;
+                    });
+                    res.on('close', function() {
+                        self.callback(undefined, res, data);
+                    });
+                });
+                req.end();
+            },
+            "correctly on the response" : function(err, resp, data) {
+                assert.equal(resp.headers['content-type'], 'testing');
+                assert.equal(data, 'body');
+            }
+        }
     }
 }).export(module);
