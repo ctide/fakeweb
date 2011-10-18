@@ -48,8 +48,8 @@ function httpModuleRequest(uri, callback) {
             outputStream.end();
         };
         thisResponse.statusCode = interceptedUris[uri].statusCode;
+        thisResponse.headers = interceptedUris[uri].headers;
         if (interceptedUris[uri].contentType) {
-            thisResponse.headers = {};
             thisResponse.headers['content-type'] = interceptedUris[uri].contentType;
         }
         thisRequest.emit('response', thisResponse);
@@ -76,8 +76,9 @@ function Fakeweb() {
         var url = options.uri || options.url;
         if (interceptable(url)) {
             var resp = {statusCode : interceptedUris[url].statusCode};
+            resp.headers = interceptedUris[url].headers;
             if (interceptedUris[url].contentType) {
-                resp.headers = {'content-type' : interceptedUris[url].contentType};
+                resp.headers['content-type'] =  interceptedUris[url].contentType;
             }
             return callback(null, resp, interceptedUris[url].response);
         } else {
@@ -90,8 +91,9 @@ function Fakeweb() {
         var url = options.uri || options.url;
         if (interceptable(url)) {
             var resp = {statusCode : interceptedUris[url].statusCode};
+            resp.headers = interceptedUris[url].headers;
             if (interceptedUris[url].contentType) {
-                resp.headers = {'content-type' : interceptedUris[url].contentType};
+                resp.headers['content-type'] =  interceptedUris[url].contentType;
             }
             return callback(null, resp, interceptedUris[url].response);
         } else {
@@ -147,6 +149,7 @@ function Fakeweb() {
             interceptedUris[options.uri].response = options.body;
         }
         interceptedUris[options.uri].statusCode = options.statusCode || 200;
+        interceptedUris[options.uri].headers = options.headers || {};
         interceptedUris[options.uri].contentType = options.contentType;
     }
 
