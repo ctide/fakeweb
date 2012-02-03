@@ -146,7 +146,7 @@ function Fakeweb() {
         interceptedUris[options.uri] = {};
         if (options.file) {
             interceptedUris[options.uri].response = fs.readFileSync(options.file);
-        } else if (options.body) {
+        } else if (options.body != undefined) {
             interceptedUris[options.uri].response = options.body;
         }
         interceptedUris[options.uri].statusCode = options.statusCode || 200;
