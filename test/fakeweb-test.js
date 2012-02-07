@@ -127,5 +127,13 @@ vows.describe('Fakeweb').addBatch({
                 assert.equal(data, 'body');
             }
         }
+    },
+    "won't truncate " : {
+        topic: function() {
+            fakeweb.registerUri({uri: 'http://www.testingimages.com/grimace.jpg', binaryFile: path.join(__dirname, 'fixtures', 'grimace.jpg'), contentType: 'image/jpeg'});
+            request.get({uri: 'http://www.testingimages.com/grimace.jpg'}, this.callback); },
+        'binary files' : function(err, resp, body) {
+            assert.equal(body, fs.readFileSync(path.join(__dirname, 'fixtures', 'grimace.jpg'), 'binary'));
+        }
     }
 }).export(module);

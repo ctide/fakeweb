@@ -144,8 +144,12 @@ function Fakeweb() {
     registerUri = function(options) {
         options.uri = parseUrl(options.uri);
         interceptedUris[options.uri] = {};
-        if (options.file) {
-            interceptedUris[options.uri].response = fs.readFileSync(options.file);
+        if (options.file || options.binaryFile) {
+            if (options.binaryFile) {
+                interceptedUris[options.uri].response = fs.readFileSync(options.binaryFile, 'binary');
+            } else {
+                interceptedUris[options.uri].response = fs.readFileSync(options.file);
+            }
         } else if (options.body != undefined) {
             interceptedUris[options.uri].response = options.body;
         }
