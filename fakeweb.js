@@ -42,6 +42,8 @@ function httpModuleRequest(uri, callback) {
 
     thisRequest.end = function() {
         var thisResponse = new EventEmitter();
+        // Request module checks against the connection object event emitter
+        thisResponse.connection = thisResponse;
         thisResponse.pause = thisResponse.resume = {apply:function(){}};
         thisResponse.setEncoding = function() {};
         thisResponse.pipe = function(outputStream) {
