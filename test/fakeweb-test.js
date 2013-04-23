@@ -16,10 +16,18 @@ fixture = fs.readFileSync(path.join(__dirname, 'fixtures', 'README.md')).toStrin
 
 vows.describe('Fakeweb').addBatch({
     "will read a fixture from disk and return that" : {
-        "when queried with request": {
+        "when queried with request passing an object": {
             topic: function() {
                 fakeweb.registerUri({uri: 'http://www.readme.com/', file: path.join(__dirname, 'fixtures', 'README.md')});
                 request.get({uri: 'http://www.readme.com/'}, this.callback); },
+            "successfully" : function(err, resp, body) {
+                assert.equal(body.toString(), fixture);
+            }
+        },
+        "when queried with request passing a string as the uri": {
+            topic: function() {
+                fakeweb.registerUri({uri: 'http://www.readme.com/', file: path.join(__dirname, 'fixtures', 'README.md')});
+                request.get('http://www.readme.com/', this.callback); },
             "successfully" : function(err, resp, body) {
                 assert.equal(body.toString(), fixture);
             }
