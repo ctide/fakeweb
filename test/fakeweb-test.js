@@ -59,6 +59,14 @@ vows.describe('Fakeweb').addBatch({
             assert.throws(function() { https.request({host: 'www.test.com', port: 80, path: '/', method: 'GET'}); });
         }
     },
+    'will not fail to intercept calls made using request directly' : {
+      topic: function() {
+          fakeweb.registerUri({uri: 'http://www.readme.com/', file: path.join(__dirname, 'fixtures', 'README.md')});
+          request('http://www.readme.com/', this.callback); },
+      "successfully" : function(err, resp, body) {
+          assert.equal(body.toString(), fixture);
+      }
+    },
     'will allow connections to local resources if allowLocalConnect ' : {
         'is set to true' : function() {
             assert.doesNotThrow(function() { request.get({uri: 'http://localhost:4324'}, function() {} ); });
