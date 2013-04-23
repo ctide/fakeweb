@@ -76,6 +76,10 @@ function Fakeweb() {
 
     var oldRequestGet = request.get;
     request.get = function(options, callback) {
+        if(typeof options === "string"){
+            options = {uri: options};
+        }
+        
         var url = options.uri || options.url;
         if (interceptable(url)) {
             var resp = {statusCode : interceptedUris[url].statusCode};
@@ -91,6 +95,10 @@ function Fakeweb() {
 
     var oldRequestPost = request.post;
     request.post = function(options, callback) {
+        if(typeof options === "string"){
+            options = {uri: options};
+        }
+        
         var url = options.uri || options.url;
         if (interceptable(url)) {
             var resp = {statusCode : interceptedUris[url].statusCode};
