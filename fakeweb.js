@@ -44,7 +44,7 @@ function httpModuleRequest(uri, callback) {
         var thisResponse = new EventEmitter();
         // Request module checks against the connection object event emitter
         thisResponse.connection = thisResponse;
-        thisResponse.pause = thisResponse.resume = {apply:function(){}};
+        thisResponse.pause = thisResponse.resume = function(){};
         thisResponse.setEncoding = function() {};
         thisResponse.pipe = function(outputStream) {
             outputStream.write(interceptedUris[uri].response);

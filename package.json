@@ -13,7 +13,7 @@
     "node": ">=0.4"
   },
   "dependencies": {
-    "request": "=2.1.1"
+    "request": ">= 2.16.6"
   },
   "devDependencies": {
     "vows": "latest"
