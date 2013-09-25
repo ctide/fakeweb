@@ -22,7 +22,10 @@ function interceptable(uri) {
     }
     if (allowNetConnect === false) {
         if (uri) {
-            if (allowLocalConnect === true && url.parse(uri).hostname == "localhost") {
+            var hostname = url.parse(uri).hostname
+              , requestIsLocal = (hostname == "localhost" || hostname == "127.0.0.1")
+              ;
+            if (allowLocalConnect === true && requestIsLocal) {
                 return false;
             }
             console.error("FAKEWEB: Unhandled GET request to " + uri);
@@ -79,7 +82,7 @@ function Fakeweb() {
         if(typeof options === "string"){
             options = {uri: options};
         }
-        
+
         var url = options.uri || options.url;
         if (interceptable(url)) {
             var resp = {statusCode : interceptedUris[url].statusCode};
@@ -98,7 +101,7 @@ function Fakeweb() {
         if(typeof options === "string"){
             options = {uri: options};
         }
-        
+
         var url = options.uri || options.url;
         if (interceptable(url)) {
             var resp = {statusCode : interceptedUris[url].statusCode};
