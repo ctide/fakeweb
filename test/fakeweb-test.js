@@ -55,16 +55,16 @@ vows.describe('Fakeweb').addBatch({
     },
     'will throw an exception with allowNetConnect off and you make ' : {
         'a GET request via request module' : function() {
-            assert.throws(function() { request.get({uri: 'http://www.test.com/'}); });
+            assert.throws(function() { request.get({uri: 'http://www.test.com/'}); }, /GET/);
         },
         'a POST request via request module' : function() {
-            assert.throws(function() { request.post({uri: 'http://www.test.com/'}); });
+            assert.throws(function() { request.post({uri: 'http://www.test.com/'}); }, /POST/);
         },
         'a request using the HTTP module' : function() {
-            assert.throws(function() { http.request({host: 'www.test.com', port: 80, path: '/', method: 'GET'}); });
+            assert.throws(function() { http.request({host: 'www.test.com', port: 80, path: '/', method: 'GET'}); }, /GET/);
         },
         'a request using the HTTPS module' : function() {
-            assert.throws(function() { https.request({host: 'www.test.com', port: 80, path: '/', method: 'GET'}); });
+            assert.throws(function() { https.request({host: 'www.test.com', port: 80, path: '/', method: 'GET'}); }, /GET/);
         }
     },
     'will not fail to intercept calls made using request directly' : {

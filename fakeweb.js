@@ -12,7 +12,13 @@ var fs = require('fs')
 
 
 
-function interceptable(uri) {
+function interceptable(uri, method) {
+    
+    if(typeof method === "undefined")
+    {
+        method = "GET";
+    }
+
     uri = parseUrl(uri);
     if (interceptedUris[uri]) {
         return true;
@@ -28,8 +34,8 @@ function interceptable(uri) {
             if (allowLocalConnect === true && requestIsLocal) {
                 return false;
             }
-            console.error("FAKEWEB: Unhandled GET request to " + uri);
-            throw "FAKEWEB: Unhandled GET request to " + uri;
+            console.error("FAKEWEB: Unhandled" + method + "request to " + uri);
+            throw "FAKEWEB: Unhandled " + method + " request to " + uri;
         } else {
             console.error("FAKEWEB: Invalid request");
             throw "FAKEWEB: Invalid request";
@@ -103,7 +109,7 @@ function Fakeweb() {
         }
 
         var url = options.uri || options.url;
-        if (interceptable(url)) {
+        if (interceptable(url, "POST")) {
             var resp = {statusCode : interceptedUris[url].statusCode};
             resp.headers = interceptedUris[url].headers;
             if (interceptedUris[url].contentType) {
@@ -123,7 +129,7 @@ function Fakeweb() {
         } else {
             uri = "https://" + options.host + options.path;
         }
-        if (interceptable(uri)) {
+        if (interceptable(uri, options.method)) {
             return httpModuleRequest(uri, callback);
         } else {
             return oldHttpsRequest.call(https, options, callback);
@@ -138,7 +144,7 @@ function Fakeweb() {
         } else {
             uri = "http://" + options.host + options.path;
         }
-        if (interceptable(uri)) {
+        if (interceptable(uri, options.method)) {
             return httpModuleRequest(uri, callback);
         } else {
             return oldHttpRequest.call(http, options, callback);
