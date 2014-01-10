@@ -151,5 +151,43 @@ vows.describe('Fakeweb').addBatch({
         'binary files' : function(err, resp, body) {
             assert.equal(body, fs.readFileSync(path.join(__dirname, 'fixtures', 'grimace.jpg'), 'binary'));
         }
+    },
+    "will prefer hostname over host in http request options": {
+        topic: function() {
+            var self = this;
+            var data = '';
+            fakeweb.registerUri({uri: 'http://hostname.com:80/', body: 'hostname'});
+            var req = http.request({hostname: 'hostname.com', host: 'hostname.com:80', port: '80', path: '/', method: 'GET'}, function(res) {
+                res.on('data', function(chunk) {
+                    data += chunk;
+                });
+                res.on('close', function() {
+                    self.callback(undefined, res, data);
+                });
+            });
+            req.end();
+        },
+        "correctly on the response" : function(err, resp, body) {
+            assert.equal(resp.statusCode, 200);
+        }
+    },
+    "will prefer hostname over host in https request options": {
+        topic: function() {
+            var self = this;
+            var data = '';
+            fakeweb.registerUri({uri: 'https://hostname.com:80/', body: 'hostname'});
+            var req = https.request({hostname: 'hostname.com', host: 'hostname.com:80', port: '80', path: '/', method: 'GET'}, function(res) {
+                res.on('data', function(chunk) {
+                    data += chunk;
+                });
+                res.on('close', function() {
+                    self.callback(undefined, res, data);
+                });
+            });
+            req.end();
+        },
+        "correctly on the response" : function(err, resp, body) {
+            assert.equal(resp.statusCode, 200);
+        }
     }
 }).export(module);
