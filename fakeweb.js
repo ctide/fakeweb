@@ -13,7 +13,7 @@ var fs = require('fs')
 
 
 function interceptable(uri, method) {
-    
+
     if(typeof method === "undefined")
     {
         method = "GET";
@@ -125,7 +125,7 @@ function Fakeweb() {
     https.request = function(options, callback) {
         var uri;
         if (options.port) {
-            uri = "https://" + options.host + ":" + options.port + options.path;
+            uri = "https://" + (options.hostname || options.host) + ":" + options.port + options.path;
         } else {
             uri = "https://" + options.host + options.path;
         }
@@ -140,7 +140,7 @@ function Fakeweb() {
     http.request = function(options, callback) {
         var uri;
         if (options.port) {
-            uri = "http://" + options.host + ":" + options.port + options.path;
+            uri = "http://" + (options.hostname || options.host) + ":" + options.port + options.path;
         } else {
             uri = "http://" + options.host + options.path;
         }
