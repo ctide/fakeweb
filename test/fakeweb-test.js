@@ -189,5 +189,24 @@ vows.describe('Fakeweb').addBatch({
         "correctly on the response" : function(err, resp, body) {
             assert.equal(resp.statusCode, 200);
         }
+    },
+    "will follow redirects": {
+        topic: function() {
+            fakeweb.registerUri({uri: 'http://redirect.com/redirect', statusCode: 301, headers: {Location: '/redirect-target'}, body: ''});
+            fakeweb.registerUri({uri: 'http://redirect.com/redirect-target', statusCode: 200, body: 'body'});
+            request.get({uri: 'http://redirect.com/redirect'}, this.callback); },
+        'with request' : function(err, resp, body) {
+            assert.equal(resp.statusCode, 200);
+            assert.equal(body, 'body');
+        }
+    },
+    "will not follow redirects if request option is set": {
+        topic: function() {
+            fakeweb.registerUri({uri: 'http://redirect.com/redirect', statusCode: 301, headers: {Location: '/redirect-target'}, body: ''});
+            fakeweb.registerUri({uri: 'http://redirect.com/redirect-target', statusCode: 200, body: 'body'});
+            request.get({uri: 'http://redirect.com/redirect', followRedirect: false}, this.callback); },
+        'with request' : function(err, resp, body) {
+            assert.equal(resp.statusCode, 301);
+        }
     }
 }).export(module);

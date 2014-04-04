@@ -89,14 +89,20 @@ function Fakeweb() {
             options = {uri: options};
         }
 
-        var url = options.uri || options.url;
-        if (interceptable(url)) {
-            var resp = {statusCode : interceptedUris[url].statusCode};
-            resp.headers = interceptedUris[url].headers;
-            if (interceptedUris[url].contentType) {
-                resp.headers['content-type'] =  interceptedUris[url].contentType;
+        var uri = options.uri || options.url;
+        var followRedirect = options.followRedirect !== undefined ? options.followRedirect : true
+        if (interceptable(uri)) {
+            if (interceptedUris[uri].statusCode >= 300 && interceptedUris[uri].statusCode < 400 && interceptedUris[uri].headers.Location && followRedirect) {
+                var redirectTo = url.resolve(uri, interceptedUris[uri].headers.Location);
+                return request.get({uri: redirectTo}, callback);
+            } else {
+                var resp = {statusCode : interceptedUris[uri].statusCode};
+                resp.headers = interceptedUris[uri].headers;
+                if (interceptedUris[uri].contentType) {
+                    resp.headers['content-type'] =  interceptedUris[uri].contentType;
+                }
+                return callback(null, resp, interceptedUris[uri].response);
             }
-            return callback(null, resp, interceptedUris[url].response);
         } else {
             return oldRequestGet.call(request, options, callback);
         }
