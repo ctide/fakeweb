@@ -173,7 +173,7 @@ function Fakeweb() {
             if (options.binaryFile) {
                 interceptedUris[options.uri].response = fs.readFileSync(options.binaryFile, 'binary');
             } else {
-                interceptedUris[options.uri].response = fs.readFileSync(options.file);
+                interceptedUris[options.uri].response = fs.readFileSync(options.file).toString();
             }
         } else if (options.body != undefined) {
             interceptedUris[options.uri].response = options.body;

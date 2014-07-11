@@ -21,7 +21,7 @@ vows.describe('Fakeweb').addBatch({
                 fakeweb.registerUri({uri: 'http://www.readme.com/', file: path.join(__dirname, 'fixtures', 'README.md')});
                 request.get({uri: 'http://www.readme.com/'}, this.callback); },
             "successfully" : function(err, resp, body) {
-                assert.equal(body.toString(), fixture);
+                assert.equal(body, fixture);
             }
         },
         "when queried with request passing a string as the uri": {
@@ -29,7 +29,7 @@ vows.describe('Fakeweb').addBatch({
                 fakeweb.registerUri({uri: 'http://www.readme.com/', file: path.join(__dirname, 'fixtures', 'README.md')});
                 request.get('http://www.readme.com/', this.callback); },
             "successfully" : function(err, resp, body) {
-                assert.equal(body.toString(), fixture);
+                assert.equal(body, fixture);
             }
         },
         "and when queried using ": {
@@ -72,7 +72,7 @@ vows.describe('Fakeweb').addBatch({
             fakeweb.registerUri({uri: 'http://www.readme.com/', file: path.join(__dirname, 'fixtures', 'README.md')});
             request('http://www.readme.com/', this.callback); },
         "successfully" : function(err, resp, body) {
-            assert.equal(body.toString(), fixture);
+            assert.equal(body, fixture);
         }
     },
     'will allow connections to local resources if allowLocalConnect ' : {
