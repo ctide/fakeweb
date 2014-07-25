@@ -133,7 +133,7 @@ function Fakeweb() {
         if (options.port) {
             uri = "https://" + (options.hostname || options.host) + ":" + options.port + options.path;
         } else {
-            uri = "https://" + options.host + options.path;
+            uri = "https://" + (options.hostname || options.host) + options.path;
         }
         if (interceptable(uri, options.method)) {
             return httpModuleRequest(uri, callback);
@@ -148,7 +148,7 @@ function Fakeweb() {
         if (options.port) {
             uri = "http://" + (options.hostname || options.host) + ":" + options.port + options.path;
         } else {
-            uri = "http://" + options.host + options.path;
+            uri = "http://" + (options.hostname || options.host) + options.path;
         }
         if (interceptable(uri, options.method)) {
             return httpModuleRequest(uri, callback);
