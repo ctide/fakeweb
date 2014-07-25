@@ -26,6 +26,6 @@ request.get({uri: 'http://www.testing.com:80/'}, output);
 This will output:
 
 ```
-[ctide ~]:~$ node test.js
+[ctide ~]:~$ node test/test.js
 Hello!
 ```
