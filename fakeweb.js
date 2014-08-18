@@ -132,8 +132,10 @@ function Fakeweb() {
         var uri;
         if (options.port) {
             uri = "https://" + (options.hostname || options.host) + ":" + options.port + options.path;
-        } else {
+        } else if (options.path) {
             uri = "https://" + (options.hostname || options.host) + options.path;
+        } else {
+            uri = options;
         }
         if (interceptable(uri, options.method)) {
             return httpModuleRequest(uri, callback);
@@ -147,8 +149,10 @@ function Fakeweb() {
         var uri;
         if (options.port) {
             uri = "http://" + (options.hostname || options.host) + ":" + options.port + options.path;
-        } else {
+        } else if (options.path) {
             uri = "http://" + (options.hostname || options.host) + options.path;
+        } else {
+            uri = options;
         }
         if (interceptable(uri, options.method)) {
             return httpModuleRequest(uri, callback);

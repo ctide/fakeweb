@@ -190,6 +190,43 @@ vows.describe('Fakeweb').addBatch({
             assert.equal(resp.statusCode, 200);
         }
     },
+    "works with http.get when just passing a url": {
+        topic: function() {
+            var self = this;
+            var data = "";
+
+            fakeweb.registerUri({uri: "http://bitpay.com/api/rates", body: "spoofed value"});
+
+            var req = http.get("http://bitpay.com/api/rates", function(res) {
+                res.on("data", function (chunk) { data += chunk; });
+                res.on('end', function() {
+                    self.callback(undefined, res, data);
+                });
+            });
+        },
+        "successfully" : function(err, resp, body) {
+            assert.equal(body, 'spoofed value');
+        }
+
+    },
+    "works with https.get": {
+        topic: function() {
+            var self = this;
+            var data = "";
+
+            fakeweb.registerUri({uri: "https://bitpay.com/api/rates", body: "spoofed value"});
+
+            var req = https.get("https://bitpay.com/api/rates", function(res) {
+                res.on("data", function (chunk) { data += chunk; });
+                res.on('end', function() {
+                    self.callback(undefined, res, data);
+                });
+            });
+        },
+        "successfully" : function(err, resp, body) {
+            assert.equal(body, 'spoofed value');
+        }
+    },
     "will follow redirects": {
         topic: function() {
             fakeweb.registerUri({uri: 'http://redirect.com/redirect', statusCode: 301, headers: {Location: '/redirect-target'}, body: ''});
