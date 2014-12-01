@@ -190,6 +190,26 @@ vows.describe('Fakeweb').addBatch({
             assert.equal(resp.statusCode, 200);
         }
     },
+    "returns a pipable object from pipe": {
+        topic: function() {
+            var self = this;
+            var outputStream = "";
+
+            fakeweb.registerUri({uri: "http://bitpay.com/api/rates", body: "spoofed value"});
+
+            var req = http.get("http://bitpay.com/api/rates", function(res) {
+                outputStream = res.pipe(fs.createWriteStream('tmpfile.txt'));
+                res.on('end', function() {
+                    self.callback(undefined, res, outputStream);
+                });
+            });
+        },
+        "successfully" : function(err, resp, outputStream) {
+            assert.notEqual(typeof(outputStream), undefined);
+            fs.unlink('tmpfile.txt');
+            outputStream.close();
+        }
+    },
     "works with http.get when just passing a url": {
         topic: function() {
             var self = this;

@@ -58,6 +58,7 @@ function httpModuleRequest(uri, callback) {
         thisResponse.pipe = function(outputStream) {
             outputStream.write(interceptedUris[uri].response);
             outputStream.end();
+            return outputStream; // support chaining
         };
         thisResponse.statusCode = interceptedUris[uri].statusCode;
         thisResponse.headers = interceptedUris[uri].headers;
