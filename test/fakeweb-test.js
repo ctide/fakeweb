@@ -265,5 +265,41 @@ vows.describe('Fakeweb').addBatch({
         'with request' : function(err, resp, body) {
             assert.equal(resp.statusCode, 301);
         }
+    },
+    "will respect an array status codes with only one element": {
+      topic: function() {
+            fakeweb.registerUri({uri: 'http://status-codes.com/oneCodeArray', statusCode: [200] });
+            request.get({uri: 'http://status-codes.com/oneCodeArray' }, this.callback); },
+        'with request' : function(err, resp, body) {
+            assert.equal(resp.statusCode, 200);
+        }
+    },
+    "will respect an array status codes with multiple elements": {
+      topic: function() {
+            fakeweb.registerUri({uri: 'http://status-codes.com/twoCodeArray', statusCode: [200, 404] });
+            request.get({uri: 'http://status-codes.com/twoCodeArray' }, this.callback); },
+        'with two request' : function(err, resp, body) {
+            assert.equal(resp.statusCode, 200);
+
+            request.get({uri: 'http://status-codes.com/twoCodeArray' }, function(err, resp, body) {
+                assert.equal(resp.statusCode, 404);
+            });
+        }
+    },
+    "will respect an array status codes with multiple elements and will keep returning the last entry once we go over the whole array": {
+      topic: function() {
+            fakeweb.registerUri({uri: 'http://status-codes.com/twoCodeArray', statusCode: [200, 404] });
+            request.get({uri: 'http://status-codes.com/twoCodeArray' }, this.callback); },
+        'with three request' : function(err, resp, body) {
+            assert.equal(resp.statusCode, 200);
+
+            request.get({uri: 'http://status-codes.com/twoCodeArray' }, function(err, resp, body) {
+                assert.equal(resp.statusCode, 404);
+
+                request.get({uri: 'http://status-codes.com/twoCodeArray' }, function(err, resp, body) {
+                    assert.equal(resp.statusCode, 404);
+                });
+            });
+        }
     }
 }).export(module);
