@@ -45,6 +45,22 @@ function interceptable(uri, method) {
     }
 }
 
+function getStatusCode(uri) {
+    var statusCode = interceptedUris[uri].statusCode;
+
+    if (Array.isArray(statusCode)) {
+        if (statusCode.length === 0) {
+            statusCode = 200; // This should not happen but better safe than sorry
+        } else if (statusCode.length === 1) {
+             statusCode = statusCode[0];
+        } else {
+            statusCode = statusCode.shift();
+        }
+    }
+
+    return statusCode;
+}
+
 function httpModuleRequest(uri, callback) {
     var thisRequest = new EventEmitter();
     thisRequest.setEncoding = function() {};
@@ -60,7 +76,7 @@ function httpModuleRequest(uri, callback) {
             outputStream.end();
             return outputStream; // support chaining
         };
-        thisResponse.statusCode = interceptedUris[uri].statusCode;
+        thisResponse.statusCode = getStatusCode(uri);
         thisResponse.headers = interceptedUris[uri].headers;
         if (interceptedUris[uri].contentType) {
             thisResponse.headers['content-type'] = interceptedUris[uri].contentType;
@@ -93,11 +109,13 @@ function Fakeweb() {
         var uri = options.uri || options.url;
         var followRedirect = options.followRedirect !== undefined ? options.followRedirect : true
         if (interceptable(uri)) {
-            if (interceptedUris[uri].statusCode >= 300 && interceptedUris[uri].statusCode < 400 && interceptedUris[uri].headers.Location && followRedirect) {
+            var statusCode = getStatusCode(uri);
+
+            if (statusCode >= 300 && statusCode < 400 && interceptedUris[uri].headers.Location && followRedirect) {
                 var redirectTo = url.resolve(uri, interceptedUris[uri].headers.Location);
                 return request.get({uri: redirectTo}, callback);
             } else {
-                var resp = {statusCode : interceptedUris[uri].statusCode};
+                var resp = {statusCode : statusCode};
                 resp.headers = interceptedUris[uri].headers;
                 if (interceptedUris[uri].contentType) {
                     resp.headers['content-type'] =  interceptedUris[uri].contentType;
@@ -117,7 +135,7 @@ function Fakeweb() {
 
         var url = options.uri || options.url;
         if (interceptable(url, "POST")) {
-            var resp = {statusCode : interceptedUris[url].statusCode};
+            var resp = {statusCode : getStatusCode(uri)};
             resp.headers = interceptedUris[url].headers;
             if (interceptedUris[url].contentType) {
                 resp.headers['content-type'] =  interceptedUris[url].contentType;
