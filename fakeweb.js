@@ -135,7 +135,7 @@ function Fakeweb() {
 
         var url = options.uri || options.url;
         if (interceptable(url, "POST")) {
-            var resp = {statusCode : getStatusCode(uri)};
+            var resp = {statusCode : getStatusCode(url)};
             resp.headers = interceptedUris[url].headers;
             if (interceptedUris[url].contentType) {
                 resp.headers['content-type'] =  interceptedUris[url].contentType;

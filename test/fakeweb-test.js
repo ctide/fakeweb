@@ -247,6 +247,16 @@ vows.describe('Fakeweb').addBatch({
             assert.equal(body, 'spoofed value');
         }
     },
+    "works properly with request.post": {
+        topic: function() {
+            fakeweb.registerUri({uri: 'http://www.readme.com/', file: path.join(__dirname, 'fixtures', 'README.md'), method: 'POST', statusCode: 301});
+            request.post('http://www.readme.com/', this.callback);
+        },
+        "successfully" : function(err, resp, body) {
+            assert.equal(resp.statusCode, 301);
+            assert.equal(body, fixture);
+        }
+    },
     "will follow redirects": {
         topic: function() {
             fakeweb.registerUri({uri: 'http://redirect.com/redirect', statusCode: 301, headers: {Location: '/redirect-target'}, body: ''});
