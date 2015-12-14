@@ -229,6 +229,23 @@ vows.describe('Fakeweb').addBatch({
         }
 
     },
+    "matches regexes as well as actual urls": {
+        topic: function() {
+            var self = this;
+            var data = "";
+
+            fakeweb.registerUri({uri: /testing.com/, body: "Hello!"});
+            var req = http.get("http://testing.com/some_url", function(res) {
+                res.on("data", function (chunk) { data += chunk; });
+                res.on('end', function() {
+                    self.callback(undefined, res, data);
+                });
+            });
+        },
+        "successfully" : function(err, resp, body) {
+            assert.equal(body, 'Hello!');
+        }
+    },
     "works with https.get": {
         topic: function() {
             var self = this;

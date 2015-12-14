@@ -7,20 +7,32 @@ var fs = require('fs')
   , _allowNetConnect = true
   , _allowLocalConnect = true
   , interceptedUris = {}
+  , regexMatches = []
   , ignoredUris = {}
   ;
 
 
+function fakewebMatch(uri) {
+    for (var i = 0; i < regexMatches.length; i++) {
+        if (uri.match(regexMatches[i])) {
+            return interceptedUris[regexMatches[i]];
+        }
+    }
+    if (interceptedUris[uri]) {
+        return interceptedUris[uri];
+    }
+}
+
 
 function interceptable(uri, method) {
 
-    if(typeof method === "undefined")
-    {
+    if (typeof method === "undefined") {
         method = "GET";
     }
 
     uri = parseUrl(uri);
-    if (interceptedUris[uri]) {
+
+    if (fakewebMatch(uri)) {
         return true;
     }
     if (ignoredUris[uri]) {
@@ -46,7 +58,7 @@ function interceptable(uri, method) {
 }
 
 function getStatusCode(uri) {
-    var statusCode = interceptedUris[uri].statusCode;
+    var statusCode = fakewebMatch(uri).statusCode;
 
     if (Array.isArray(statusCode)) {
         if (statusCode.length === 0) {
@@ -63,6 +75,7 @@ function getStatusCode(uri) {
 
 function httpModuleRequest(uri, callback) {
     var thisRequest = new EventEmitter();
+    var fakewebOptions = fakewebMatch(uri);
     thisRequest.setEncoding = function() {};
 
     thisRequest.end = function() {
@@ -72,14 +85,14 @@ function httpModuleRequest(uri, callback) {
         thisResponse.pause = thisResponse.resume = function(){};
         thisResponse.setEncoding = function() {};
         thisResponse.pipe = function(outputStream) {
-            outputStream.write(interceptedUris[uri].response);
+            outputStream.write(fakewebOptions.response);
             outputStream.end();
             return outputStream; // support chaining
         };
         thisResponse.statusCode = getStatusCode(uri);
-        thisResponse.headers = interceptedUris[uri].headers;
-        if (interceptedUris[uri].contentType) {
-            thisResponse.headers['content-type'] = interceptedUris[uri].contentType;
+        thisResponse.headers = fakewebOptions.headers;
+        if (fakewebOptions.contentType) {
+            thisResponse.headers['content-type'] = fakewebOptions.contentType;
         }
         thisRequest.emit('response', thisResponse);
 
@@ -87,7 +100,7 @@ function httpModuleRequest(uri, callback) {
             callback(thisResponse);
         }
 
-        thisResponse.emit('data', interceptedUris[uri].response);
+        thisResponse.emit('data', fakewebOptions.response);
         thisResponse.emit('end');
         thisResponse.emit('close');
 
@@ -109,18 +122,19 @@ function Fakeweb() {
         var uri = options.uri || options.url;
         var followRedirect = options.followRedirect !== undefined ? options.followRedirect : true
         if (interceptable(uri)) {
+            var fakewebOptions = fakewebMatch(uri);
             var statusCode = getStatusCode(uri);
 
-            if (statusCode >= 300 && statusCode < 400 && interceptedUris[uri].headers.Location && followRedirect) {
-                var redirectTo = url.resolve(uri, interceptedUris[uri].headers.Location);
+            if (statusCode >= 300 && statusCode < 400 && fakewebOptions.headers.Location && followRedirect) {
+                var redirectTo = url.resolve(uri, fakewebOptions.headers.Location);
                 return request.get({uri: redirectTo}, callback);
             } else {
                 var resp = {statusCode : statusCode};
-                resp.headers = interceptedUris[uri].headers;
-                if (interceptedUris[uri].contentType) {
-                    resp.headers['content-type'] =  interceptedUris[uri].contentType;
+                resp.headers = fakewebOptions.headers;
+                if (fakewebOptions.contentType) {
+                    resp.headers['content-type'] =  fakewebOptions.contentType;
                 }
-                return callback(null, resp, interceptedUris[uri].response);
+                return callback(null, resp, fakewebOptions.response);
             }
         } else {
             return oldRequestGet.call(request, options, callback);
@@ -135,12 +149,14 @@ function Fakeweb() {
 
         var url = options.uri || options.url;
         if (interceptable(url, "POST")) {
+            var fakewebOptions = fakewebMatch(url);
+
             var resp = {statusCode : getStatusCode(url)};
-            resp.headers = interceptedUris[url].headers;
-            if (interceptedUris[url].contentType) {
-                resp.headers['content-type'] =  interceptedUris[url].contentType;
+            resp.headers = fakewebOptions.headers;
+            if (fakewebOptions.contentType) {
+                resp.headers['content-type'] =  fakewebOptions.contentType;
             }
-            return callback(null, resp, interceptedUris[url].response);
+            return callback(null, resp, fakewebOptions.response);
         } else {
             return oldRequestPost.call(request, options, callback);
         }
@@ -182,15 +198,17 @@ function Fakeweb() {
 
     tearDown = function() {
         interceptedUris = {};
+        regexMatches = [];
         allowNetConnect = true;
         allowLocalConnect = true;
-        // request.get = oldRequestGet;
-        // https.request = oldHttpsRequest;
-        // http.request = oldHttpRequest;
     }
 
     registerUri = function(options) {
-        options.uri = parseUrl(options.uri);
+        if (options.uri instanceof RegExp) {
+          regexMatches.push(options.uri);
+        } else {
+          options.uri = parseUrl(options.uri);
+        }
         interceptedUris[options.uri] = {};
         if (options.file || options.binaryFile) {
             if (options.binaryFile) {
