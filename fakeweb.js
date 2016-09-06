@@ -76,16 +76,19 @@ function getStatusCode(uri) {
 function httpModuleRequest(uri, callback) {
     var thisRequest = new EventEmitter();
     var fakewebOptions = fakewebMatch(uri);
+    var writeBuffers = [];
     thisRequest.setEncoding = function() {};
 
     thisRequest.end = function() {
+        var requestBuffer = writeBuffers.length > 0 ? Buffer.concat(writeBuffers) : new Buffer(0);
+        var requestBody = requestBuffer.toString('utf8');
         var thisResponse = new EventEmitter();
         // Request module checks against the connection object event emitter
         thisResponse.connection = thisResponse;
         thisResponse.pause = thisResponse.resume = function(){};
         thisResponse.setEncoding = function() {};
         thisResponse.pipe = function(outputStream) {
-            outputStream.write(fakewebOptions.response);
+            outputStream.write(fakewebOptions.response(requestBody));
             outputStream.end();
             return outputStream; // support chaining
         };
@@ -100,12 +103,19 @@ function httpModuleRequest(uri, callback) {
             callback(thisResponse);
         }
 
-        thisResponse.emit('data', fakewebOptions.response);
+        thisResponse.emit('data', fakewebOptions.response(requestBody));
         thisResponse.emit('end');
         thisResponse.emit('close');
 
     }
-    thisRequest.write = function() {}
+    thisRequest.write = function(buffer, encoding) {
+      if(buffer) {
+        if(!Buffer.isBuffer(buffer)) {
+          buffer = new Buffer(buffer, encoding);
+        }
+        writeBuffers.push(buffer);
+      }
+    }
     return thisRequest;
 }
 
@@ -134,7 +144,7 @@ function Fakeweb() {
                 if (fakewebOptions.contentType) {
                     resp.headers['content-type'] =  fakewebOptions.contentType;
                 }
-                return callback(null, resp, fakewebOptions.response);
+                return callback(null, resp, fakewebOptions.response());
             }
         } else {
             return oldRequestGet.call(request, options, callback);
@@ -147,16 +157,16 @@ function Fakeweb() {
             options = {uri: options};
         }
 
-        var url = options.uri || options.url;
-        if (interceptable(url, "POST")) {
-            var fakewebOptions = fakewebMatch(url);
+        var uri = options.uri || options.url;
+        if (interceptable(uri, "POST")) {
+            var fakewebOptions = fakewebMatch(uri);
 
-            var resp = {statusCode : getStatusCode(url)};
+            var resp = {statusCode : getStatusCode(uri)};
             resp.headers = fakewebOptions.headers;
             if (fakewebOptions.contentType) {
                 resp.headers['content-type'] =  fakewebOptions.contentType;
             }
-            return callback(null, resp, fakewebOptions.response);
+            return callback(null, resp, fakewebOptions.response(options.form));
         } else {
             return oldRequestPost.call(request, options, callback);
         }
@@ -212,12 +222,20 @@ function Fakeweb() {
         interceptedUris[options.uri] = {};
         if (options.file || options.binaryFile) {
             if (options.binaryFile) {
-                interceptedUris[options.uri].response = fs.readFileSync(options.binaryFile, 'binary');
+                interceptedUris[options.uri].response = function() {
+                  return fs.readFileSync(options.binaryFile, 'binary');
+                };
             } else {
-                interceptedUris[options.uri].response = fs.readFileSync(options.file).toString();
+                interceptedUris[options.uri].response = function() {
+                  return fs.readFileSync(options.file).toString();
+                };
             }
         } else if (options.body != undefined) {
-            interceptedUris[options.uri].response = options.body;
+            var responseHandler = (typeof options.body === "function") ? options.body :
+              function (){ return options.body; };
+            interceptedUris[options.uri].response = responseHandler;
+        } else {
+            interceptedUris[options.uri].response = function() { return undefined; };
         }
         interceptedUris[options.uri].statusCode = options.statusCode || 200;
         interceptedUris[options.uri].headers = options.headers || {};
