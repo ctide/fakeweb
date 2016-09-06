@@ -57,8 +57,8 @@ function interceptable(uri, method) {
     }
 }
 
-function getStatusCode(uri) {
-    var statusCode = fakewebMatch(uri).statusCode;
+function getStatusCode(options) {
+    var statusCode = options.statusCode;
 
     if (Array.isArray(statusCode)) {
         if (statusCode.length === 0) {
@@ -92,7 +92,7 @@ function httpModuleRequest(uri, callback) {
             outputStream.end();
             return outputStream; // support chaining
         };
-        thisResponse.statusCode = getStatusCode(uri);
+        thisResponse.statusCode = getStatusCode(fakewebOptions);
         thisResponse.headers = fakewebOptions.headers;
         if (fakewebOptions.contentType) {
             thisResponse.headers['content-type'] = fakewebOptions.contentType;
@@ -133,7 +133,7 @@ function Fakeweb() {
         var followRedirect = options.followRedirect !== undefined ? options.followRedirect : true
         if (interceptable(uri)) {
             var fakewebOptions = fakewebMatch(uri);
-            var statusCode = getStatusCode(uri);
+            var statusCode = getStatusCode(fakewebOptions);
 
             if (statusCode >= 300 && statusCode < 400 && fakewebOptions.headers.Location && followRedirect) {
                 var redirectTo = url.resolve(uri, fakewebOptions.headers.Location);
@@ -161,7 +161,7 @@ function Fakeweb() {
         if (interceptable(uri, "POST")) {
             var fakewebOptions = fakewebMatch(uri);
 
-            var resp = {statusCode : getStatusCode(uri)};
+            var resp = {statusCode : getStatusCode(fakewebOptions)};
             resp.headers = fakewebOptions.headers;
             if (fakewebOptions.contentType) {
                 resp.headers['content-type'] =  fakewebOptions.contentType;
