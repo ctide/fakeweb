@@ -57,8 +57,8 @@ function interceptable(uri, method) {
     }
 }
 
-function getStatusCode(uri) {
-    var statusCode = fakewebMatch(uri).statusCode;
+function getStatusCode(options) {
+    var statusCode = options.statusCode;
 
     if (Array.isArray(statusCode)) {
         if (statusCode.length === 0) {
@@ -73,11 +73,21 @@ function getStatusCode(uri) {
     return statusCode;
 }
 
+function updateSpy(uri, options) {
+    options.spy.used = true;
+    options.spy.useCount++;
+    if (typeof options.spy.hook === "function") {
+        options.spy.hook(uri);
+    }
+}
+
 function httpModuleRequest(uri, callback) {
     var thisRequest = new EventEmitter();
     var fakewebOptions = fakewebMatch(uri);
     var writeBuffers = [];
     thisRequest.setEncoding = function() {};
+    thisRequest.setHeader = function() {};
+    thisRequest.getHeader = function() {};
 
     thisRequest.end = function() {
         var requestBuffer = writeBuffers.length > 0 ? Buffer.concat(writeBuffers) : new Buffer(0);
@@ -92,7 +102,7 @@ function httpModuleRequest(uri, callback) {
             outputStream.end();
             return outputStream; // support chaining
         };
-        thisResponse.statusCode = getStatusCode(uri);
+        thisResponse.statusCode = getStatusCode(fakewebOptions);
         thisResponse.headers = fakewebOptions.headers;
         if (fakewebOptions.contentType) {
             thisResponse.headers['content-type'] = fakewebOptions.contentType;
@@ -133,7 +143,8 @@ function Fakeweb() {
         var followRedirect = options.followRedirect !== undefined ? options.followRedirect : true
         if (interceptable(uri)) {
             var fakewebOptions = fakewebMatch(uri);
-            var statusCode = getStatusCode(uri);
+            updateSpy(uri, fakewebOptions);
+            var statusCode = getStatusCode(fakewebOptions);
 
             if (statusCode >= 300 && statusCode < 400 && fakewebOptions.headers.Location && followRedirect) {
                 var redirectTo = url.resolve(uri, fakewebOptions.headers.Location);
@@ -160,8 +171,9 @@ function Fakeweb() {
         var uri = options.uri || options.url;
         if (interceptable(uri, "POST")) {
             var fakewebOptions = fakewebMatch(uri);
+            updateSpy(uri, fakewebOptions);
 
-            var resp = {statusCode : getStatusCode(uri)};
+            var resp = {statusCode : getStatusCode(fakewebOptions)};
             resp.headers = fakewebOptions.headers;
             if (fakewebOptions.contentType) {
                 resp.headers['content-type'] =  fakewebOptions.contentType;
@@ -183,6 +195,8 @@ function Fakeweb() {
             uri = options;
         }
         if (interceptable(uri, options.method)) {
+            var fakewebOptions = fakewebMatch(uri);
+            updateSpy(uri, fakewebOptions);
             return httpModuleRequest(uri, callback);
         } else {
             return oldHttpsRequest.call(https, options, callback);
@@ -200,6 +214,8 @@ function Fakeweb() {
             uri = options;
         }
         if (interceptable(uri, options.method)) {
+            var fakewebOptions = fakewebMatch(uri);
+            updateSpy(uri, fakewebOptions);
             return httpModuleRequest(uri, callback);
         } else {
             return oldHttpRequest.call(http, options, callback);
@@ -240,6 +256,11 @@ function Fakeweb() {
         interceptedUris[options.uri].statusCode = options.statusCode || 200;
         interceptedUris[options.uri].headers = options.headers || {};
         interceptedUris[options.uri].contentType = options.contentType;
+        interceptedUris[options.uri].uri = options.uri;
+
+        var spy = { used: false, useCount: 0, hook: null };
+        interceptedUris[options.uri].spy = spy;
+        return spy;
     }
 
     ignoreUri = function(options) {

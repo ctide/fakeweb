@@ -13,6 +13,7 @@ var vows = require('vows')
 console.error = function() {};
 fakeweb.allowNetConnect = false;
 fixture = fs.readFileSync(path.join(__dirname, 'fixtures', 'README.md')).toString();
+var spy, hookInvoked = null;
 
 vows.describe('Fakeweb').addBatch({
     "will read a fixture from disk and return that" : {
@@ -337,6 +338,29 @@ vows.describe('Fakeweb').addBatch({
                     assert.equal(resp.statusCode, 404);
                 });
             });
+        }
+    },
+    "will invoke spy-hook": {
+        topic: function() {
+            spy = fakeweb.registerUri({uri: 'http://www.readme.com/', body: ''});
+            hookInvoked = null;
+            spy.hook = function(uri) { hookInvoked = uri; };
+            request.post({uri: 'http://www.readme.com/'}, this.callback);
+        },
+        "successfully" : function(err, resp, body) {
+            assert.equal(resp.statusCode, 200);
+            assert.equal(hookInvoked, 'http://www.readme.com/');
+        }
+    },
+    "will return a spy for easy testing": {
+        topic: function() {
+            spy = fakeweb.registerUri({uri: 'http://www.readme.com/', body: ''});
+            request.post({uri: 'http://www.readme.com/'}, this.callback);
+        },
+        "successfully" : function(err, resp, body) {
+            assert.equal(resp.statusCode, 200);
+            assert(spy.used);
+            assert.equal(spy.useCount, 1);
         }
     }
 }).export(module);
