@@ -347,8 +347,8 @@ vows.describe('Fakeweb').addBatch({
         },
         "successfully" : function(err, resp, body) {
             assert.equal(resp.statusCode, 200);
-            assert(spy.called);
-            assert.equal(spy.callCount, 1);
+            assert(spy.used);
+            assert.equal(spy.useCount, 1);
         }
     }
 }).export(module);
