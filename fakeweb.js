@@ -133,6 +133,8 @@ function Fakeweb() {
         var followRedirect = options.followRedirect !== undefined ? options.followRedirect : true
         if (interceptable(uri)) {
             var fakewebOptions = fakewebMatch(uri);
+            fakewebOptions.spy.called = true;
+            fakewebOptions.spy.callCount++;
             var statusCode = getStatusCode(fakewebOptions);
 
             if (statusCode >= 300 && statusCode < 400 && fakewebOptions.headers.Location && followRedirect) {
@@ -160,6 +162,8 @@ function Fakeweb() {
         var uri = options.uri || options.url;
         if (interceptable(uri, "POST")) {
             var fakewebOptions = fakewebMatch(uri);
+            fakewebOptions.spy.called = true;
+            fakewebOptions.spy.callCount++;
 
             var resp = {statusCode : getStatusCode(fakewebOptions)};
             resp.headers = fakewebOptions.headers;
@@ -183,6 +187,9 @@ function Fakeweb() {
             uri = options;
         }
         if (interceptable(uri, options.method)) {
+            var fakewebOptions = fakewebMatch(uri);
+            fakewebOptions.spy.called = true;
+            fakewebOptions.spy.callCount++;
             return httpModuleRequest(uri, callback);
         } else {
             return oldHttpsRequest.call(https, options, callback);
@@ -200,6 +207,9 @@ function Fakeweb() {
             uri = options;
         }
         if (interceptable(uri, options.method)) {
+            var fakewebOptions = fakewebMatch(uri);
+            fakewebOptions.spy.called = true;
+            fakewebOptions.spy.callCount++;
             return httpModuleRequest(uri, callback);
         } else {
             return oldHttpRequest.call(http, options, callback);
@@ -240,6 +250,10 @@ function Fakeweb() {
         interceptedUris[options.uri].statusCode = options.statusCode || 200;
         interceptedUris[options.uri].headers = options.headers || {};
         interceptedUris[options.uri].contentType = options.contentType;
+
+        var spy = { called: false, callCount: 0 };
+        interceptedUris[options.uri].spy = spy;
+        return spy;
     }
 
     ignoreUri = function(options) {
