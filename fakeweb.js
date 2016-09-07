@@ -78,6 +78,8 @@ function httpModuleRequest(uri, callback) {
     var fakewebOptions = fakewebMatch(uri);
     var writeBuffers = [];
     thisRequest.setEncoding = function() {};
+    thisRequest.setHeader = function() {};
+    thisRequest.getHeader = function() {};
 
     thisRequest.end = function() {
         var requestBuffer = writeBuffers.length > 0 ? Buffer.concat(writeBuffers) : new Buffer(0);
