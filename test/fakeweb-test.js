@@ -13,6 +13,7 @@ var vows = require('vows')
 console.error = function() {};
 fakeweb.allowNetConnect = false;
 fixture = fs.readFileSync(path.join(__dirname, 'fixtures', 'README.md')).toString();
+var spy;
 
 vows.describe('Fakeweb').addBatch({
     "will read a fixture from disk and return that" : {
@@ -274,6 +275,16 @@ vows.describe('Fakeweb').addBatch({
             assert.equal(body, fixture);
         }
     },
+    "will pass on post-data to body-handler if it is a function": {
+        topic: function() {
+            fakeweb.registerUri({uri: 'http://www.readme.com/', body: function (postData){ return postData; }});
+            request.post({uri: 'http://www.readme.com/', form: {test: 'yes'}}, this.callback);
+        },
+        "successfully" : function(err, resp, body) {
+            assert.equal(resp.statusCode, 200);
+            assert.deepEqual(body, {test: 'yes'});
+        }
+    },
     "will follow redirects": {
         topic: function() {
             fakeweb.registerUri({uri: 'http://redirect.com/redirect', statusCode: 301, headers: {Location: '/redirect-target'}, body: ''});
@@ -327,6 +338,17 @@ vows.describe('Fakeweb').addBatch({
                     assert.equal(resp.statusCode, 404);
                 });
             });
+        }
+    },
+    "will return a spy for easy testing": {
+        topic: function() {
+            spy = fakeweb.registerUri({uri: 'http://www.readme.com/', body: ''});
+            request.post({uri: 'http://www.readme.com/'}, this.callback);
+        },
+        "successfully" : function(err, resp, body) {
+            assert.equal(resp.statusCode, 200);
+            assert(spy.used);
+            assert.equal(spy.useCount, 1);
         }
     }
 }).export(module);
