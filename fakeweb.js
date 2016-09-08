@@ -46,7 +46,7 @@ function interceptable(uri, method) {
             if (allowLocalConnect === true && requestIsLocal) {
                 return false;
             }
-            console.error("FAKEWEB: Unhandled" + method + "request to " + uri);
+            console.error("FAKEWEB: Unhandled " + method + " request to " + uri);
             throw "FAKEWEB: Unhandled " + method + " request to " + uri;
         } else {
             console.error("FAKEWEB: Invalid request");
