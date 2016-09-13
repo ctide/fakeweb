@@ -3,91 +3,33 @@ const request = require('request');
 const url = require('url');
 const https = require('https');
 const http = require('http');
+const utils = require('./lib/utils');
 const EventEmitter = require('events').EventEmitter;
-const interceptedUris = {};
-const regexMatches = [];
-const ignoredUris = {};
-
-function fakewebMatch(uri) {
-  for (let i = 0; i < regexMatches.length; i++) {
-    if (uri.match(regexMatches[i])) {
-      return interceptedUris[regexMatches[i]];
-    }
-  }
-  if (interceptedUris[uri]) {
-    return interceptedUris[uri];
-  }
-}
-
-
-function interceptable(uri, method) {
-  if (typeof method === "undefined") {
-    method = "GET";
-  }
-
-  uri = parseUrl(uri);
-
-  if (fakewebMatch(uri)) {
-    return true;
-  }
-  if (ignoredUris[uri] || allowNetConnect) {
-    return false;
-  }
-
-  if (uri) {
-    const hostname = url.parse(uri).hostname;
-    const requestIsLocal = (hostname == "localhost" || hostname == "127.0.0.1");
-    if (allowLocalConnect === true && requestIsLocal) {
-      return false;
-    }
-    console.error("FAKEWEB: Unhandled " + method + " request to " + uri);
-    throw "FAKEWEB: Unhandled " + method + " request to " + uri;
-  } else {
-    console.error("FAKEWEB: Invalid request");
-    throw "FAKEWEB: Invalid request";
-  }
-}
-
-function getStatusCode(options) {
-  let statusCode = options.statusCode;
-
-  if (Array.isArray(statusCode)) {
-    if (statusCode.length === 0) {
-      statusCode = 200; // This should not happen but better safe than sorry
-    } else if (statusCode.length === 1) {
-      statusCode = statusCode[0];
-    } else {
-      statusCode = statusCode.shift();
-    }
-  }
-
-  return statusCode;
-}
 
 function httpModuleRequest(uri, callback) {
   const thisRequest = new EventEmitter();
-  const fakewebOptions = fakewebMatch(uri);
+  const fakewebOptions = this.fakewebMatch(uri);
   const writeBuffers = [];
 
-  thisRequest.setEncoding = function() {};
-  thisRequest.setHeader = function() {};
-  thisRequest.getHeader = function() {};
+  thisRequest.setEncoding = () => {};
+  thisRequest.setHeader = () => {};
+  thisRequest.getHeader = () => {};
 
-  thisRequest.end = function() {
+  thisRequest.end = () => {
     const requestBuffer = writeBuffers.length > 0 ? Buffer.concat(writeBuffers) : new Buffer(0);
     const requestBody = requestBuffer.toString('utf8');
     const thisResponse = new EventEmitter();
 
     // Request module checks against the connection object event emitter
     thisResponse.connection = thisResponse;
-    thisResponse.pause = thisResponse.resume = function() {};
-    thisResponse.setEncoding = function() {};
-    thisResponse.pipe = function(outputStream) {
+    thisResponse.pause = thisResponse.resume = () => {};
+    thisResponse.setEncoding = () => {};
+    thisResponse.pipe = (outputStream) => {
       outputStream.write(fakewebOptions.response(requestBody));
       outputStream.end();
       return outputStream; // support chaining
     };
-    thisResponse.statusCode = getStatusCode(fakewebOptions);
+    thisResponse.statusCode = utils.getStatusCode(fakewebOptions);
     thisResponse.headers = fakewebOptions.headers;
 
     if (fakewebOptions.contentType) {
@@ -102,10 +44,9 @@ function httpModuleRequest(uri, callback) {
     thisResponse.emit('data', fakewebOptions.response(requestBody));
     thisResponse.emit('end');
     thisResponse.emit('close');
+  };
 
-  }
-
-  thisRequest.write = function(buffer, encoding) {
+  thisRequest.write = function requestWrite(buffer, encoding) {
     if (buffer) {
       if (!Buffer.isBuffer(buffer)) {
         buffer = new Buffer(buffer, encoding);
@@ -113,7 +54,7 @@ function httpModuleRequest(uri, callback) {
 
       writeBuffers.push(buffer);
     }
-  }
+  };
 
   return thisRequest;
 }
@@ -121,152 +62,175 @@ function httpModuleRequest(uri, callback) {
 function Fakeweb() {
   this.allowNetConnect = true;
   this.allowLocalConnect = true;
+  this.interceptedUris = {};
+  this.ignoredUris = [];
+  this.regexMatches = [];
 
   const oldRequestGet = request.get;
-  request.get = function(options, callback) {
-    if (typeof options === "string") {
-      options = {uri: options};
+  request.get = (options, callback) => {
+    if (typeof options === 'string') {
+      options = { uri: options };
     }
 
     const uri = options.uri || options.url;
-    const followRedirect = options.followRedirect !== undefined ? options.followRedirect : true
-    if (interceptable(uri)) {
-      const fakewebOptions = fakewebMatch(uri);
+    const followRedirect = options.followRedirect !== undefined ? options.followRedirect : true;
+    if (this.interceptable(uri)) {
+      const fakewebOptions = this.fakewebMatch(uri);
       fakewebOptions.spy.used = true;
-      fakewebOptions.spy.useCount++;
-      const statusCode = getStatusCode(fakewebOptions);
+      fakewebOptions.spy.useCount += 1;
+      const statusCode = utils.getStatusCode(fakewebOptions);
 
       if (statusCode >= 300 && statusCode < 400 && fakewebOptions.headers.Location && followRedirect) {
         const redirectTo = url.resolve(uri, fakewebOptions.headers.Location);
-        return request.get({uri: redirectTo}, callback);
-      } else {
-        const resp = {statusCode: statusCode};
-        resp.headers = fakewebOptions.headers;
-        if (fakewebOptions.contentType) {
-          resp.headers['content-type'] =  fakewebOptions.contentType;
-        }
-        return callback(null, resp, fakewebOptions.response());
+        return request.get({ uri: redirectTo }, callback);
       }
-    } else {
-      return oldRequestGet.call(request, options, callback);
+
+      const resp = { statusCode };
+      resp.headers = fakewebOptions.headers;
+      if (fakewebOptions.contentType) {
+        resp.headers['content-type'] = fakewebOptions.contentType;
+      }
+      return callback(null, resp, fakewebOptions.response());
     }
-  }
+    return oldRequestGet.call(request, options, callback);
+  };
 
   const oldRequestPost = request.post;
-  request.post = function(options, callback) {
-    if (typeof options === "string"){
-      options = {uri: options};
+  request.post = (options, callback) => {
+    if (typeof options === 'string') {
+      options = { uri: options };
     }
 
     const uri = options.uri || options.url;
-    if (interceptable(uri, "POST")) {
-      const fakewebOptions = fakewebMatch(uri);
+    if (this.interceptable(uri, 'POST')) {
+      const fakewebOptions = this.fakewebMatch(uri);
       fakewebOptions.spy.used = true;
-      fakewebOptions.spy.useCount++;
+      fakewebOptions.spy.useCount += 1;
 
-      const resp = {statusCode : getStatusCode(fakewebOptions)};
+      const resp = { statusCode: utils.getStatusCode(fakewebOptions) };
       resp.headers = fakewebOptions.headers;
       if (fakewebOptions.contentType) {
-        resp.headers['content-type'] =  fakewebOptions.contentType;
+        resp.headers['content-type'] = fakewebOptions.contentType;
       }
       return callback(null, resp, fakewebOptions.response(options.form));
-    } else {
-      return oldRequestPost.call(request, options, callback);
     }
-  }
+    return oldRequestPost.call(request, options, callback);
+  };
 
   const oldHttpsRequest = https.request;
-  https.request = function(options, callback) {
+  https.request = (options, callback) => {
     let uri = options;
     if (options.port) {
-      uri = "https://" + (options.hostname || options.host) + ":" + options.port + options.path;
+      uri = `https://${(options.hostname || options.host)}:${options.port}${options.path}`;
     } else if (options.path) {
-      uri = "https://" + (options.hostname || options.host) + options.path;
+      uri = `https://${(options.hostname || options.host)}${options.path}`;
     }
-    if (interceptable(uri, options.method)) {
-      const fakewebOptions = fakewebMatch(uri);
+    if (this.interceptable(uri, options.method)) {
+      const fakewebOptions = this.fakewebMatch(uri);
       fakewebOptions.spy.used = true;
-      fakewebOptions.spy.useCount++;
-      return httpModuleRequest(uri, callback);
-    } else {
-      return oldHttpsRequest.call(https, options, callback);
+      fakewebOptions.spy.useCount += 1;
+      return httpModuleRequest.call(this, uri, callback);
     }
-  }
+    return oldHttpsRequest.call(https, options, callback);
+  };
 
   const oldHttpRequest = http.request;
-  http.request = function(options, callback) {
+  http.request = (options, callback) => {
     let uri = options;
     if (options.port) {
-      uri = "http://" + (options.hostname || options.host) + ":" + options.port + options.path;
+      uri = `http://${(options.hostname || options.host)}:${options.port}${options.path}`;
     } else if (options.path) {
-      uri = "http://" + (options.hostname || options.host) + options.path;
+      uri = `http://${(options.hostname || options.host)}${options.path}`;
     }
-    if (interceptable(uri, options.method)) {
-      const fakewebOptions = fakewebMatch(uri);
+    if (this.interceptable(uri, options.method)) {
+      const fakewebOptions = this.fakewebMatch(uri);
       fakewebOptions.spy.used = true;
-      fakewebOptions.spy.useCount++;
-      return httpModuleRequest(uri, callback);
-    } else {
-      return oldHttpRequest.call(http, options, callback);
+      fakewebOptions.spy.useCount += 1;
+      return httpModuleRequest.call(this, uri, callback);
     }
-  }
+    return oldHttpRequest.call(http, options, callback);
+  };
 
-  tearDown = function() {
-    interceptedUris = {};
-    regexMatches = [];
-    allowNetConnect = true;
-    allowLocalConnect = true;
-  }
+  this.tearDown = function tearDown() {
+    this.interceptedUris = {};
+    this.regexMatches = [];
+    this.allowNetConnect = true;
+    this.allowLocalConnect = true;
+  };
 
-  registerUri = function(options) {
+  this.registerUri = (options) => {
     if (options.uri instanceof RegExp) {
-      regexMatches.push(options.uri);
+      this.regexMatches.push(options.uri);
     } else {
-      options.uri = parseUrl(options.uri);
+      options.uri = utils.parseUrl(options.uri);
     }
-    interceptedUris[options.uri] = {};
+    this.interceptedUris[options.uri] = {};
     if (options.file || options.binaryFile) {
       if (options.binaryFile) {
-        interceptedUris[options.uri].response = function() {
-          return fs.readFileSync(options.binaryFile, 'binary');
-        }
+        this.interceptedUris[options.uri].response = () => fs.readFileSync(options.binaryFile, 'binary');
       } else {
-        interceptedUris[options.uri].response = function() {
-          return fs.readFileSync(options.file).toString();
-        };
+        this.interceptedUris[options.uri].response = () => fs.readFileSync(options.file).toString();
       }
-    } else if (options.body != undefined) {
-      interceptedUris[options.uri].response = (typeof options.body === "function") ? options.body : function () { return options.body; };
+    } else if (options.body !== undefined) {
+      this.interceptedUris[options.uri].response = (typeof options.body === 'function') ? options.body : () => options.body;
     } else {
-      interceptedUris[options.uri].response = function() { return undefined; };
+      this.interceptedUris[options.uri].response = () => undefined;
     }
-    interceptedUris[options.uri].statusCode = options.statusCode || 200;
-    interceptedUris[options.uri].headers = options.headers || {};
-    interceptedUris[options.uri].contentType = options.contentType;
+    this.interceptedUris[options.uri].statusCode = options.statusCode || 200;
+    this.interceptedUris[options.uri].headers = options.headers || {};
+    this.interceptedUris[options.uri].contentType = options.contentType;
 
     const spy = { used: false, useCount: 0 };
-    interceptedUris[options.uri].spy = spy;
+    this.interceptedUris[options.uri].spy = spy;
     return spy;
-  }
+  };
 
-  ignoreUri = function(options) {
-    ignoredUris[parseUrl(options.uri)] = true;
-  }
+  this.ignoreUri = function ignoreUri(options) {
+    this.ignoredUris[utils.parseUrl(options.uri)] = true;
+  };
 
   return this;
+}
+
+Fakeweb.prototype.interceptable = function interceptable(uri, method) {
+  if (typeof method === 'undefined') {
+    method = 'GET';
+  }
+
+  uri = utils.parseUrl(uri);
+
+  if (this.fakewebMatch(uri)) {
+    return true;
+  }
+  if (this.ignoredUris[uri] || this.allowNetConnect) {
+    return false;
+  }
+
+  if (uri) {
+    const hostname = url.parse(uri).hostname;
+    const requestIsLocal = (hostname === 'localhost' || hostname === '127.0.0.1');
+    if (this.allowLocalConnect === true && requestIsLocal) {
+      return false;
+    }
+    const errorMessage = `FAKEWEB: Unhandled ${method} request to ${uri}`;
+    console.error(errorMessage);
+    throw new Error(errorMessage);
+  } else {
+    console.error('FAKEWEB: Invalid request');
+    throw new Error('FAKEWEB: Invalid request');
+  }
 };
 
-module.exports = Fakeweb();
-
-
-function parseUrl(uri) {
-  const tempUrl = url.parse(uri);
-  if (!tempUrl.port) {
-    if (tempUrl.protocol === 'http:') {
-      tempUrl.port = 80;
-    } else if (tempUrl.protocol === 'https:') {
-      tempUrl.port = 443;
+Fakeweb.prototype.fakewebMatch = function fakewebMatch(uri) {
+  for (let i = 0; i < this.regexMatches.length; i += 1) {
+    if (uri.match(this.regexMatches[i])) {
+      return this.interceptedUris[this.regexMatches[i]];
     }
   }
-  return url.format(tempUrl);
-}
+  if (this.interceptedUris[uri]) {
+    return this.interceptedUris[uri];
+  }
+  return false;
+};
+
+module.exports = new Fakeweb();
