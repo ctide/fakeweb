@@ -8,7 +8,7 @@ var fs = require('fs');
 var path = require('path');
 var fixture;
 var events = require('events');
-var spy;
+var spy, spy2, spy3;
 
 console.error = function() {};
 fakeweb.allowNetConnect = false;
@@ -361,6 +361,37 @@ vows.describe('Fakeweb').addBatch({
       assert.equal(resp.statusCode, 200);
       assert(spy.used);
       assert.equal(spy.useCount, 1);
+    }
+  },
+  "will return a spy that contains posted data": {
+    topic: function() {
+      spy2 = fakeweb.registerUri({uri: 'http://www.readme.com/', body: ''});
+      request.post({uri: 'http://www.readme.com/', body: 'hi'}, this.callback);
+    },
+    "successfully": function(err, resp, body) {
+      assert.equal(spy2.body, 'hi');
+    }
+  },
+  'will return a spy from http.requests that contains posted data': {
+    topic: function() {
+      var self = this;
+      var data = '';
+      spy3 = fakeweb.registerUri({uri: 'http://www.readme.com:80/post', method: 'POST', body: 'hi'});
+      var req = http.request({host: 'www.readme.com', port: '80', path: '/post', method: 'POST'}, function(res) {
+        res.on('data', function(chunk) {
+          data += chunk;
+        });
+        res.on('close', function() {
+          self.callback(undefined, data);
+        });
+      });
+      req.write('hi', 'utf8', () => {
+        req.end();
+      });
+    },
+    "successfully": function(err, resp) {
+      assert.equal(resp, 'hi');
+      assert.equal(spy3.body, 'hi');
     }
   }
 }).export(module);
