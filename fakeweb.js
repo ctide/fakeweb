@@ -17,8 +17,6 @@ function Fakeweb() {
   request.post = overrides.requestPost.bind(this);
   https.request = overrides.httpsRequest.bind(this);
   http.request = overrides.httpRequest.bind(this);
-
-  return this;
 }
 
 Fakeweb.prototype.tearDown = function tearDown() {
