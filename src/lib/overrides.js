@@ -1,5 +1,3 @@
-'use strict';
-
 const EventEmitter = require('events').EventEmitter;
 const request = require('request');
 const https = require('https');
@@ -53,7 +51,7 @@ function httpModuleRequest(uri, callback, spy) {
     thisResponse.emit('close');
   };
 
-  thisRequest.write = function requestWrite(buffer, encoding, callback) {
+  thisRequest.write = function requestWrite(buffer, encoding, cb) {
     if (buffer) {
       if (!Buffer.isBuffer(buffer)) {
         buffer = new Buffer(buffer, encoding);
@@ -61,8 +59,8 @@ function httpModuleRequest(uri, callback, spy) {
 
       writeBuffers.push(buffer);
     }
-    if (callback) {
-      callback();
+    if (cb) {
+      cb();
     }
   };
 

@@ -8,7 +8,7 @@
     "type": "git",
     "url": "git://github.com/ctide/fakeweb.git"
   },
-  "main": "fakeweb.js",
+  "main": "./src/fakeweb.js",
   "engines": {
     "node": ">=4.0"
   },
@@ -16,7 +16,7 @@
     "request": ">= 2.16.6"
   },
   "scripts": {
-    "lint": "node_modules/.bin/eslint fakeweb.js",
+    "lint": "node_modules/.bin/eslint src/**/*.js",
     "test": "node test/fakeweb-test.js"
   },
   "devDependencies": {
