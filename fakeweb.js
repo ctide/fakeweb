@@ -8,17 +8,22 @@ const http = require('http');
 const utils = require('./lib/utils');
 const overrides = require('./lib/overrides');
 
-function Fakeweb() {
-  this.allowNetConnect = true;
-  this.allowLocalConnect = true;
-  this.interceptedUris = {};
-  this.ignoredUris = [];
-  this.regexMatches = [];
+class Fakeweb {
+  constructor() {
+    this.allowNetConnect = true;
+    this.allowLocalConnect = true;
+    this.interceptedUris = {};
+    this.ignoredUris = [];
+    this.regexMatches = [];
+    this.setup();
+  }
 
-  request.get = overrides.requestGet.bind(this);
-  request.post = overrides.requestPost.bind(this);
-  https.request = overrides.httpsRequest.bind(this);
-  http.request = overrides.httpRequest.bind(this);
+  setup() {
+    request.get = overrides.requestGet.bind(this);
+    request.post = overrides.requestPost.bind(this);
+    https.request = overrides.httpsRequest.bind(this);
+    http.request = overrides.httpRequest.bind(this);
+  }
 }
 
 Fakeweb.prototype.tearDown = function tearDown() {
