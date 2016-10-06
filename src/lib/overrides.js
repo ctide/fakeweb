@@ -18,6 +18,7 @@ function httpModuleRequest(uri, callback, spy) {
   thisRequest.setEncoding = () => {};
   thisRequest.setHeader = () => {};
   thisRequest.getHeader = () => {};
+  thisRequest.setNoDelay = () => {};
 
   thisRequest.end = () => {
     const requestBuffer = writeBuffers.length > 0 ? Buffer.concat(writeBuffers) : new Buffer(0);
