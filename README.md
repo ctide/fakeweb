@@ -47,25 +47,30 @@ those should be intercepted as well, but there's no guarantees.
 var fakeweb = require('node-fakeweb');
 
 fakeweb.allowNetConnect = false; // default = true
-/*
+```
+
 Setting this value to false will cause fakeweb to throw an exception for
 any web request that's made that isn't registered as one to intercept.
 Helpful to ensure that you aren't missing any web requests.
-*/
+
+```
+var fakeweb = require('node-fakeweb');
 
 fakeweb.allowLocalConnect = false; // default = true
-/*
+```
+
 By default, fakeweb will allow requests that go to localhost or
 127.0.0.1 to pass through. Setting this to false will ensure that it
 will throw exceptions for these as well.
-*/
+
+```
+var fakeweb = require('node-fakeweb');
 
 fakeweb.ignoreUri({uri: 'http://www.google.com/'});
-/*
+```
+
 If you have allowNetConnect set to false, ignoring a URI will cause
 fakeweb to pass through requests to that URI as normla.
-*/
-```
 
 #### Registering URIs
 
@@ -74,18 +79,18 @@ intercepting a request.
 
 Accepted options:
 
-`uri`: This can either be an exact URL or a regex that will be compared
+* `uri`: This can either be an exact URL or a regex that will be compared
 against all requests.
-`file`: This will respond with the contents of a file as a string
-`binaryFile`: This will respond with the contents of a file, but will
+* `file`: This will respond with the contents of a file as a string
+* `binaryFile`: This will respond with the contents of a file, but will
 read it in as a binary file instead of a string
-`statusCode`: Status code can either be a number or an array. If given
+* `statusCode`: Status code can either be a number or an array. If given
 an array, fakeweb will iterate over the status codes for subsequent
 responses that match the uri.
-`headers`: An object that contains the various headers that should be
+* `headers`: An object that contains the various headers that should be
 sent to the client.
-`contentType`: Sets the content type of the response.
-`body`: This can accept either a string or a function. If given a
+* `contentType`: Sets the content type of the response.
+* `body`: This can accept either a string or a function. If given a
 string, that will be the body of the response. When given a function,
 that function will be called and the return value of that function will
 be set as the body of the response.
