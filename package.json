@@ -2,7 +2,7 @@
   "author": "ctide <christide@christide.com> (http://www.github.com/ctide)",
   "name": "node-fakeweb",
   "description": "Fakeweb implementation in node for testing HTTP requests",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "homepage": "http://www.github.com/ctide/fakeweb",
   "repository": {
     "type": "git",

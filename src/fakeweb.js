@@ -54,6 +54,7 @@ Fakeweb.prototype.registerUri = function registerUri(options) {
   this.interceptedUris[options.uri].statusCode = options.statusCode || 200;
   this.interceptedUris[options.uri].headers = options.headers || {};
   this.interceptedUris[options.uri].contentType = options.contentType;
+  this.interceptedUris[options.uri].exception = options.exception;
 
   const spy = { used: false, useCount: 0 };
   this.interceptedUris[options.uri].spy = spy;

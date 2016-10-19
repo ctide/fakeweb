@@ -94,6 +94,9 @@ sent to the client.
 string, that will be the body of the response. When given a function,
 that function will be called and the return value of that function will
 be set as the body of the response.
+* `exception`: `true` will cause fakeweb to throw an ECONNREFUSED
+exception instead of handling the request. Useful for testing failure
+cases where the endpoint is unreachable.
 
 #### Spies
 

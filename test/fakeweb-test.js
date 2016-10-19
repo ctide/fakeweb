@@ -86,8 +86,26 @@ vows.describe('Fakeweb').addBatch({
   },
   'will allow connections to URLs specifically defined as ignored when allowNetConnect is off' : function() {
     fakeweb.ignoreUri({uri: 'http://www.google.com:80/'});
-    assert.doesNotThrow(function() { request.get({uri: 'http://www.google.com:80/'}, function() {} ); 
-  });
+    assert.doesNotThrow(function() { request.get({uri: 'http://www.google.com:80/'}, function() {} ); });
+  },
+  "will allow users to register a URI that will throw ECONNREFUSED with request": function() {
+    fakeweb.registerUri({uri: 'http://www.google.com/exception', exception: true});
+    assert.throws(() => { request.get('http://www.google.com/exception'); }, /ECONNREFUSED/);
+  },
+  "will allow users to register a URI that will throw" : {
+    topic: function() {
+      var self = this;
+      fakeweb.registerUri({uri: 'http://www.google.com:80/exception', exception: true});
+      var req = http.request({host: 'www.google.com', port: '80', path: '/exception', method: 'GET'}, function(res) {
+        res.on('error', function(err) {
+          self.callback(err);
+        });
+      });
+      req.end();
+    },
+    'ECONNREFUSED via http module': function(err, resp, data) {
+      assert.equal(err.code, 'ECONNREFUSED');
+    }
   },
   'will set content type ' : {
     'with request' : {

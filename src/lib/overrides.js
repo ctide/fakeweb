@@ -47,6 +47,14 @@ function httpModuleRequest(uri, callback, spy) {
       callback(thisResponse);
     }
 
+    if (fakewebOptions.exception) {
+      const error = createException();
+      thisResponse.emit('error', error);
+      thisResponse.emit('end');
+      thisResponse.emit('close');
+      return;
+    }
+
     spy.body = requestBody;
     thisResponse.emit('data', fakewebOptions.response(requestBody));
     thisResponse.emit('end');
@@ -69,6 +77,14 @@ function httpModuleRequest(uri, callback, spy) {
   return thisRequest;
 }
 
+function createException() {
+  const error = new Error(`connect ECONNREFUSED`);
+  error.code = 'ECONNREFUSED';
+  error.errno = 'ECONNREFUSED';
+  error.syscall = 'connect';
+  return error;
+}
+
 function requestGet(options, callback) {
   if (typeof options === 'string') {
     options = { uri: options };
@@ -80,6 +96,9 @@ function requestGet(options, callback) {
     const fakewebOptions = this.fakewebMatch(uri);
     fakewebOptions.spy.used = true;
     fakewebOptions.spy.useCount += 1;
+    if (fakewebOptions.exception) {
+      throw createException(fakewebOptions);
+    }
     const statusCode = utils.getStatusCode(fakewebOptions);
 
     if (statusCode >= 300 && statusCode < 400 && fakewebOptions.headers.Location && followRedirect) {
@@ -109,6 +128,9 @@ function requestPost(options, callback) {
     fakewebOptions.spy.useCount += 1;
     fakewebOptions.spy.body = options.body;
     fakewebOptions.spy.form = options.form;
+    if (fakewebOptions.exception) {
+      throw createException(fakewebOptions);
+    }
 
     const resp = { statusCode: utils.getStatusCode(fakewebOptions) };
     resp.headers = fakewebOptions.headers;
