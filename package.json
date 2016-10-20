@@ -8,7 +8,9 @@
     "type": "git",
     "url": "git://github.com/ctide/fakeweb.git"
   },
-  "publishConfig": {"registry":"https://registry.npmjs.org/"},
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org/"
+  },
   "main": "./src/fakeweb.js",
   "engines": {
     "node": ">=4.0"
@@ -26,6 +28,8 @@
     "eslint-plugin-import": "^1.14.0",
     "eslint-plugin-jsx-a11y": "^2.2.2",
     "eslint-plugin-react": "^6.2.1",
+    "grunt": "^1.0.1",
+    "gruntify-eslint": "^3.1.0",
     "vows": "latest"
   }
 }

@@ -10,6 +10,14 @@ const oldRequestPost = request.post;
 const oldHttpsRequest = https.request;
 const oldHttpRequest = http.request;
 
+function createException() {
+  const error = new Error(`connect ECONNREFUSED`);
+  error.code = 'ECONNREFUSED';
+  error.errno = 'ECONNREFUSED';
+  error.syscall = 'connect';
+  return error;
+}
+
 function httpModuleRequest(uri, callback, spy) {
   const thisRequest = new EventEmitter();
   const fakewebOptions = this.fakewebMatch(uri);
@@ -75,14 +83,6 @@ function httpModuleRequest(uri, callback, spy) {
   };
 
   return thisRequest;
-}
-
-function createException() {
-  const error = new Error(`connect ECONNREFUSED`);
-  error.code = 'ECONNREFUSED';
-  error.errno = 'ECONNREFUSED';
-  error.syscall = 'connect';
-  return error;
 }
 
 function requestGet(options, callback) {
