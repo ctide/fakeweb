@@ -30,8 +30,6 @@ function interceptable(uri, method) {
         method = "GET";
     }
 
-    uri = parseUrl(uri);
-
     if (fakewebMatch(uri)) {
         return true;
     }
@@ -141,6 +139,7 @@ function Fakeweb() {
 
         var uri = options.uri || options.url;
         var followRedirect = options.followRedirect !== undefined ? options.followRedirect : true
+        uri = parseUrl(uri);
         if (interceptable(uri)) {
             var fakewebOptions = fakewebMatch(uri);
             updateSpy(uri, fakewebOptions);
@@ -169,6 +168,7 @@ function Fakeweb() {
         }
 
         var uri = options.uri || options.url;
+        uri = parseUrl(uri);
         if (interceptable(uri, "POST")) {
             var fakewebOptions = fakewebMatch(uri);
             updateSpy(uri, fakewebOptions);
@@ -194,6 +194,7 @@ function Fakeweb() {
         } else {
             uri = options;
         }
+        uri = parseUrl(uri);
         if (interceptable(uri, options.method)) {
             var fakewebOptions = fakewebMatch(uri);
             updateSpy(uri, fakewebOptions);
@@ -213,6 +214,7 @@ function Fakeweb() {
         } else {
             uri = options;
         }
+        uri = parseUrl(uri);
         if (interceptable(uri, options.method)) {
             var fakewebOptions = fakewebMatch(uri);
             updateSpy(uri, fakewebOptions);
