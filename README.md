@@ -100,12 +100,20 @@ cases where the endpoint is unreachable.
 
 #### Spies
 
+A spy will be returned from registering a URI that can be used to verify
+that a request has been made. It will also contain a counter that will
+be incremented for each request that's been made.
+
 ```
 var fakeweb = require('node-fakeweb');
 
 var googleSpy = fakeweb.registerUri({uri: 'http://www.google.com/'});
-```
+// googleSpy == { used: false, useCount: 0 }
+request.get('http://www.google.com/', function() {});
 
+// googleSpy will now look like:
+// { used: true, useCount: 1 }
+```
 
 ## Contributing
 
