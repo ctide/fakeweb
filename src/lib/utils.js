@@ -4,9 +4,9 @@ module.exports.parseUrl = (uri) => {
   const tempUrl = url.parse(uri);
   if (!tempUrl.port) {
     if (tempUrl.protocol === 'http:') {
-      tempUrl.port = 80;
+      tempUrl.host += ":80";
     } else if (tempUrl.protocol === 'https:') {
-      tempUrl.port = 443;
+      tempUrl.host += ":443";
     }
   }
   return url.format(tempUrl);

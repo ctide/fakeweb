@@ -93,6 +93,7 @@ Fakeweb.prototype.interceptable = function interceptable(uri, method) {
 };
 
 Fakeweb.prototype.fakewebMatch = function fakewebMatch(uri) {
+  uri = utils.parseUrl(uri);
   for (let i = 0; i < this.regexMatches.length; i += 1) {
     if (uri.match(this.regexMatches[i])) {
       return this.interceptedUris[this.regexMatches[i]];

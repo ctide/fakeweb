@@ -23,6 +23,8 @@
     "test": "node test/fakeweb-test.js"
   },
   "devDependencies": {
+    "chai": "^3.5.0",
+    "chai-as-promised": "^6.0.0",
     "eslint": "^3.5.0",
     "eslint-config-airbnb": "^11.1.0",
     "eslint-plugin-import": "^1.14.0",
@@ -30,6 +32,8 @@
     "eslint-plugin-react": "^6.2.1",
     "grunt": "^1.0.1",
     "gruntify-eslint": "^3.1.0",
+    "grunt-mocha-test": "^0.13.2",
+    "mocha": "^3.1.2",
     "vows": "latest"
   }
 }

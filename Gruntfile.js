@@ -5,10 +5,15 @@ module.exports = function(grunt) {
         configFile: './.eslintrc.json'
       },
       src: ['src/**/*.js']
+    },
+    mochaTest: {
+      options: { reporter: 'spec' },
+      src: 'test/**/*.js'
     }
   };
   grunt.initConfig(options);
   grunt.loadNpmTasks("gruntify-eslint");
-  grunt.registerTask('default', ['eslint']);
+  grunt.loadNpmTasks('grunt-mocha-test');
+  grunt.registerTask('default', ['eslint', 'mochaTest']);
 };
 
