@@ -19,13 +19,14 @@ npm install --save-dev node-fakeweb
 ## Basic Example
 
 ```
-var request = require('request');
-var fakeweb = require('node-fakeweb');
-var output = function(err, resp, body) { console.log(body); }
+const request = require('request');
+const fakeweb = require('node-fakeweb');
 
 fakeweb.allowNetConnect = false;
 fakeweb.registerUri({uri: 'http://www.testing.com:80/', body: 'Hello!'});
-request.get({uri: 'http://www.testing.com:80/'}, output);
+request.get({uri: 'http://www.testing.com:80/'}, (err, resp, body) => {
+  console.log(body);
+});
 ```
 
 This will output:
@@ -44,7 +45,7 @@ those should be intercepted as well, but there's no guarantees.
 #### Options
 
 ```
-var fakeweb = require('node-fakeweb');
+const fakeweb = require('node-fakeweb');
 
 fakeweb.allowNetConnect = false; // default = true
 ```
@@ -54,7 +55,7 @@ any web request that's made that isn't registered as one to intercept.
 Helpful to ensure that you aren't missing any web requests.
 
 ```
-var fakeweb = require('node-fakeweb');
+const fakeweb = require('node-fakeweb');
 
 fakeweb.allowLocalConnect = false; // default = true
 ```
@@ -64,7 +65,7 @@ By default, fakeweb will allow requests that go to localhost or
 will throw exceptions for these as well.
 
 ```
-var fakeweb = require('node-fakeweb');
+const fakeweb = require('node-fakeweb');
 
 fakeweb.ignoreUri({uri: 'http://www.google.com/'});
 ```
@@ -105,14 +106,27 @@ that a request has been made. It will also contain a counter that will
 be incremented for each request that's been made.
 
 ```
-var fakeweb = require('node-fakeweb');
+const fakeweb = require('node-fakeweb');
 
-var googleSpy = fakeweb.registerUri({uri: 'http://www.google.com/'});
+let googleSpy = fakeweb.registerUri({uri: 'http://www.google.com/'});
 // googleSpy == { used: false, useCount: 0 }
 request.get('http://www.google.com/', function() {});
 
 // googleSpy will now look like:
 // { used: true, useCount: 1 }
+```
+
+It can also trap the data POSTed to the url, and include that in the spy:
+
+```
+let fakeweb = require('node-fakeweb');
+
+let googleSpy = fakeweb.registerUri({uri: 'http://www.google.com/'});
+// googleSpy == { used: false, useCount: 0 }
+request.post({uri: 'http://www.google.com/', body: 'hello!'}, function() {});
+
+// googleSpy will now look like:
+// { used: true, useCount: 1, body: 'hello!', form: undefined }
 ```
 
 ## Contributing
