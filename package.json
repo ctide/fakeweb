@@ -2,7 +2,7 @@
   "author": "ctide <christide@christide.com> (http://www.github.com/ctide)",
   "name": "node-fakeweb",
   "description": "Fakeweb implementation in node for testing HTTP requests",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "homepage": "http://www.github.com/ctide/fakeweb",
   "repository": {
     "type": "git",
@@ -20,7 +20,7 @@
   },
   "scripts": {
     "lint": "node_modules/.bin/eslint src/**/*.js",
-    "test": "node test/fakeweb-test.js"
+    "test": "grunt"
   },
   "devDependencies": {
     "chai": "^3.5.0",
@@ -33,7 +33,6 @@
     "grunt": "^1.0.1",
     "gruntify-eslint": "^3.1.0",
     "grunt-mocha-test": "^0.13.2",
-    "mocha": "^3.1.2",
-    "vows": "latest"
+    "mocha": "^3.1.2"
   }
 }
