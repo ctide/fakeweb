@@ -33,29 +33,35 @@ Fakeweb.prototype.tearDown = function tearDown() {
 
 Fakeweb.prototype.registerUri = function registerUri(options) {
   if (options.uri instanceof RegExp) {
-    this.regexMatches.push(options.uri);
+    if (this.regexMatches.indexOf(options.uri) === -1) {
+      this.regexMatches.push(options.uri);
+    }
   } else {
     options.uri = utils.parseUrl(options.uri);
   }
-  this.interceptedUris[options.uri] = {};
+  const interception = {};
   if (options.file || options.binaryFile) {
     if (options.binaryFile) {
-      this.interceptedUris[options.uri].response = () => fs.readFileSync(options.binaryFile, 'binary');
+      interception.response = () => fs.readFileSync(options.binaryFile, 'binary');
     } else {
-      this.interceptedUris[options.uri].response = () => fs.readFileSync(options.file).toString();
+      interception.response = () => fs.readFileSync(options.file).toString();
     }
   } else if (options.body !== undefined) {
-    this.interceptedUris[options.uri].response = (typeof options.body === 'function') ? options.body : () => options.body;
+    interception.response = (typeof options.body === 'function') ? options.body : () => options.body;
   } else {
-    this.interceptedUris[options.uri].response = () => undefined;
+    interception.response = () => undefined;
   }
-  this.interceptedUris[options.uri].statusCode = options.statusCode || 200;
-  this.interceptedUris[options.uri].headers = options.headers || {};
-  this.interceptedUris[options.uri].contentType = options.contentType;
-  this.interceptedUris[options.uri].exception = options.exception;
+  interception.statusCode = options.statusCode || 200;
+  interception.headers = options.headers || {};
+  interception.contentType = options.contentType;
+  interception.exception = options.exception;
 
   const spy = { used: false, useCount: 0 };
-  this.interceptedUris[options.uri].spy = spy;
+  interception.spy = spy;
+  if (!this.interceptedUris[options.uri]) {
+    this.interceptedUris[options.uri] = {};
+  }
+  this.interceptedUris[options.uri][options.method || 'ANY'] = interception;
   return spy;
 };
 
@@ -70,7 +76,7 @@ Fakeweb.prototype.interceptable = function interceptable(uri, method) {
 
   uri = utils.parseUrl(uri);
 
-  if (this.fakewebMatch(uri)) {
+  if (this.fakewebMatch(uri, method)) {
     return true;
   }
   if (this.ignoredUris[uri] || this.allowNetConnect) {
@@ -92,15 +98,22 @@ Fakeweb.prototype.interceptable = function interceptable(uri, method) {
   }
 };
 
-Fakeweb.prototype.fakewebMatch = function fakewebMatch(uri) {
+Fakeweb.prototype.fakewebMatch = function fakewebMatch(uri, method) {
+  method = (method || '').toUpperCase();
   uri = utils.parseUrl(uri);
   for (let i = 0; i < this.regexMatches.length; i += 1) {
     if (uri.match(this.regexMatches[i])) {
-      return this.interceptedUris[this.regexMatches[i]];
+      if (this.interceptedUris[this.regexMatches[i]][method]) {
+        return this.interceptedUris[this.regexMatches[i]][method];
+      }
+      return this.interceptedUris[this.regexMatches[i]].ANY;
     }
   }
   if (this.interceptedUris[uri]) {
-    return this.interceptedUris[uri];
+    if (this.interceptedUris[uri][method]) {
+      return this.interceptedUris[uri][method];
+    }
+    return this.interceptedUris[uri].ANY;
   }
   return false;
 };

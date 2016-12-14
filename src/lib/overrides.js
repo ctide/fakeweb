@@ -18,9 +18,8 @@ function createException() {
   return error;
 }
 
-function httpModuleRequest(uri, callback, spy) {
+function httpModuleRequest(uri, callback, fakewebOptions) {
   const thisRequest = new EventEmitter();
-  const fakewebOptions = this.fakewebMatch(uri);
   const writeBuffers = [];
 
   thisRequest.setEncoding = () => {};
@@ -63,7 +62,7 @@ function httpModuleRequest(uri, callback, spy) {
       return;
     }
 
-    spy.body = requestBody;
+    fakewebOptions.spy.body = requestBody;
     thisResponse.emit('data', fakewebOptions.response(requestBody));
     thisResponse.emit('end');
     thisResponse.emit('close');
@@ -93,7 +92,7 @@ function requestGet(options, callback) {
   const uri = options.uri || options.url;
   const followRedirect = options.followRedirect !== undefined ? options.followRedirect : true;
   if (this.interceptable(uri)) {
-    const fakewebOptions = this.fakewebMatch(uri);
+    const fakewebOptions = this.fakewebMatch(uri, 'GET');
     fakewebOptions.spy.used = true;
     fakewebOptions.spy.useCount += 1;
     if (fakewebOptions.exception) {
@@ -123,7 +122,7 @@ function requestPost(options, callback) {
 
   const uri = options.uri || options.url;
   if (this.interceptable(uri, 'POST')) {
-    const fakewebOptions = this.fakewebMatch(uri);
+    const fakewebOptions = this.fakewebMatch(uri, 'POST');
     fakewebOptions.spy.used = true;
     fakewebOptions.spy.useCount += 1;
     fakewebOptions.spy.body = options.body;
@@ -150,10 +149,10 @@ function httpsRequest(options, callback) {
     uri = `https://${(options.hostname || options.host)}${options.path}`;
   }
   if (this.interceptable(uri, options.method)) {
-    const fakewebOptions = this.fakewebMatch(uri);
+    const fakewebOptions = this.fakewebMatch(uri, options.method);
     fakewebOptions.spy.used = true;
     fakewebOptions.spy.useCount += 1;
-    return httpModuleRequest.call(this, uri, callback, fakewebOptions.spy);
+    return httpModuleRequest.call(this, uri, callback, fakewebOptions);
   }
   return oldHttpsRequest.call(https, options, callback);
 }
@@ -166,10 +165,10 @@ function httpRequest(options, callback) {
     uri = `http://${(options.hostname || options.host)}${options.path}`;
   }
   if (this.interceptable(uri, options.method)) {
-    const fakewebOptions = this.fakewebMatch(uri);
+    const fakewebOptions = this.fakewebMatch(uri, options.method);
     fakewebOptions.spy.used = true;
     fakewebOptions.spy.useCount += 1;
-    return httpModuleRequest.call(this, uri, callback, fakewebOptions.spy);
+    return httpModuleRequest.call(this, uri, callback, fakewebOptions);
   }
   return oldHttpRequest.call(http, options, callback);
 }

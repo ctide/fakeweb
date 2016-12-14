@@ -303,4 +303,81 @@ describe('fakeweb', () => {
       });
     });
   });
+  
+  describe('supports multiple methods', () => {
+    it('with regex URIs', done => {
+      fakeweb.registerUri({uri: /regexmethods/, method: 'POST', body: 'POST'});
+      fakeweb.registerUri({uri: /regexmethods/, method: 'GET', body: 'GET'});
+      fakeweb.registerUri({uri: /regexmethods/, method: 'PUT', body: 'PUT'});
+      request.get({uri: 'http://regexmethods.com/get'}, (err, resp, body) => {
+        body.should.equal('GET');
+        request.post({uri: 'http://regexmethods.com/post'}, (err, resp, body) => {
+          body.should.equal('POST');
+          request.put({uri: 'http://regexmethods.com/put'}, (err, resp, body) => {
+            body.should.equal('PUT');
+            done();
+          });
+        });
+      });
+    });
+    it('using request shorthands', done => {
+      fakeweb.registerUri({uri: 'http://methods.com/', method: 'POST', body: 'POST'});
+      fakeweb.registerUri({uri: 'http://methods.com/', method: 'GET', body: 'GET'});
+      fakeweb.registerUri({uri: 'http://methods.com/', method: 'PUT', body: 'PUT'});
+      request.get({uri: 'http://methods.com/'}, (err, resp, body) => {
+        body.should.equal('GET');
+        request.post({uri: 'http://methods.com/'}, (err, resp, body) => {
+          body.should.equal('POST');
+          request.put({uri: 'http://methods.com/'}, (err, resp, body) => {
+            body.should.equal('PUT');
+            done();
+          });
+        });
+      });
+    });
+    it('using request longhand version', done => {
+      fakeweb.registerUri({uri: 'http://methods.com/', method: 'POST', body: 'POST'});
+      fakeweb.registerUri({uri: 'http://methods.com/', method: 'GET', body: 'GET'});
+      fakeweb.registerUri({uri: 'http://methods.com/', method: 'PUT', body: 'PUT'});
+      request({uri: 'http://methods.com/', method: 'GET'}, (err, resp, body) => {
+        body.should.equal('GET');
+        request({uri: 'http://methods.com/', method: 'post'}, (err, resp, body) => {
+          body.should.equal('POST');
+          request({uri: 'http://methods.com/', method: 'Put'}, (err, resp, body) => {
+            body.should.equal('PUT');
+            done();
+          });
+        });
+      });
+    });
+    it('using http module', done => {
+      fakeweb.registerUri({uri: 'http://methods.com/', method: 'POST', body: 'POST'});
+      fakeweb.registerUri({uri: 'http://methods.com/', method: 'GET', body: 'GET'});
+      fakeweb.registerUri({uri: 'http://methods.com/', method: 'PUT', body: 'PUT'});
+      let req = http.request({host: 'methods.com', port: '80', path: '/', method: 'POST'}, res => {
+        res.on('data', chunk => { data += chunk; });
+        res.on('close', () => {
+          data.should.equal('POST');
+          req = http.request({host: 'methods.com', port: '80', path: '/', method: 'GET'}, res => {
+            data = '';
+            res.on('data', chunk => { data += chunk; });
+            res.on('close', () => {
+              data.should.equal('GET');
+              req = http.request({host: 'methods.com', port: '80', path: '/', method: 'PUT'}, res => {
+                data = '';
+                res.on('data', chunk => { data += chunk; });
+                res.on('close', () => {
+                  data.should.equal('PUT');
+                  done();
+                });
+              });
+              req.end();
+            });
+          });
+          req.end();
+        });
+      });
+      req.end();
+    });
+  });
 });

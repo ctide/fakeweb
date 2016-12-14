@@ -82,6 +82,8 @@ Accepted options:
 
 * `uri`: This can either be an exact URL or a regex that will be compared
 against all requests.
+* `method`: Defaults to 'ANY', but otherwise will only match requests
+that have the method specified when registering the URI.
 * `file`: This will respond with the contents of a file as a string
 * `binaryFile`: This will respond with the contents of a file, but will
 read it in as a binary file instead of a string
