@@ -210,7 +210,7 @@ describe('fakeweb', () => {
   });
 
   it('works properly with request.post', done => {
-    fakeweb.registerUri({uri: 'http://www.readme.com/', file: path.join(__dirname, 'fixtures', 'README.md'), method: 'POST', statusCode: 301});
+    fakeweb.registerUri({uri: 'http://www.readme.com/', file: path.join(__dirname, 'fixtures', 'README.md'), statusCode: 301});
     request.post('http://www.readme.com/', (err, resp, body) => {
       resp.statusCode.should.equal(301);
       body.should.equal(fixture);
@@ -289,7 +289,7 @@ describe('fakeweb', () => {
     });
 
     it('that work properly for request made with http as well', done => {
-      let spy = fakeweb.registerUri({uri: 'http://www.readme.com/post', method: 'POST', body: 'hi'});
+      let spy = fakeweb.registerUri({uri: 'http://www.readme.com/post', body: 'hi'});
       let req = http.request({host: 'www.readme.com', port: '80', path: '/post', method: 'POST'}, res => {
         res.on('data', chunk => { data += chunk; });
         res.on('close', () => {
