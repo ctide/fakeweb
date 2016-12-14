@@ -2,23 +2,38 @@
   "author": "ctide <christide@christide.com> (http://www.github.com/ctide)",
   "name": "node-fakeweb",
   "description": "Fakeweb implementation in node for testing HTTP requests",
-  "version": "0.2.0",
+  "version": "1.0.1",
   "homepage": "http://www.github.com/ctide/fakeweb",
   "repository": {
     "type": "git",
     "url": "git://github.com/ctide/fakeweb.git"
   },
-  "main": "fakeweb.js",
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org/"
+  },
+  "main": "./src/fakeweb.js",
   "engines": {
-    "node": ">=0.4"
+    "node": ">=4.0"
   },
   "dependencies": {
     "request": ">= 2.16.6"
   },
   "scripts": {
+    "lint": "node_modules/.bin/eslint src/**/*.js",
     "test": "node test/fakeweb-test.js"
   },
   "devDependencies": {
+    "chai": "^3.5.0",
+    "chai-as-promised": "^6.0.0",
+    "eslint": "^3.5.0",
+    "eslint-config-airbnb": "^11.1.0",
+    "eslint-plugin-import": "^1.14.0",
+    "eslint-plugin-jsx-a11y": "^2.2.2",
+    "eslint-plugin-react": "^6.2.1",
+    "grunt": "^1.0.1",
+    "gruntify-eslint": "^3.1.0",
+    "grunt-mocha-test": "^0.13.2",
+    "mocha": "^3.1.2",
     "vows": "latest"
   }
 }
