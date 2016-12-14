@@ -9,36 +9,34 @@ const fs = require('fs');
 const path = require('path');
 const events = require('events');
 const fixture = fs.readFileSync(path.join(__dirname, 'fixtures', 'README.md')).toString();
+const should = chai.should();
 
-let spy, spy2, spy3;
+let data;
 
-console.error = function() {};
+console.error = () => {};
 fakeweb.allowNetConnect = false;
-chai.should();
 
-describe('fakeweb', function() {
-  beforeEach(function() {
+describe('fakeweb', () => {
+  beforeEach(() => {
+    data = '';
     fakeweb.tearDown();
     fakeweb.allowNetConnect = false;
   });
 
-  describe("will read a fixture from disk and return that", function() {
-    it("when queried with request passing an object", function(done) {
+  describe("will read a fixture from disk and return that", () => {
+    it("when queried with request passing an object", done => {
       fakeweb.registerUri({uri: 'http://www.readme.com/', file: path.join(__dirname, 'fixtures', 'README.md')});
-      request.get({uri: 'http://www.readme.com/'}, function(err, resp, body) {
+      request.get({uri: 'http://www.readme.com/'}, (err, resp, body) => {
         body.should.equal(fixture);
         done();
       });
     });
 
-    it('and when queried using http', function(done) {
-      let data = '';
+    it('and when queried using http', done => {
       fakeweb.registerUri({uri: 'http://www.readme.com:90/', file: path.join(__dirname, 'fixtures', 'README.md')});
-      var req = http.request({host: 'www.readme.com', port: '90', path: '/', method: 'GET'}, function(res) {
-        res.on('data', function(chunk) {
-          data += chunk;
-        });
-        res.on('close', function() {
+      var req = http.request({host: 'www.readme.com', port: '90', path: '/', method: 'GET'}, res => {
+        res.on('data', chunk => { data += chunk; });
+        res.on('close', () => {
           data.toString().should.equal(fixture);
           done();
         });
@@ -47,384 +45,262 @@ describe('fakeweb', function() {
     });
   });
 
-  describe('will throw an exception with allowConnect off when you make', function() {
-    it ('a GET request via request module', function() {
-      let fun = function() { request.get({uri: 'http://www.test.com/'}); }
+  describe('will throw an exception with allowConnect off when you make', () => {
+    it ('a GET request via request module', () => {
+      let fun = () => { request.get({uri: 'http://www.test.com/'}); }
       fun.should.throw(/GET/);
     });
 
-    it ('a POST request via request module', function() {
-      let fun = function() { request.post({uri: 'http://www.test.com/'}); }
+    it ('a POST request via request module', () => {
+      let fun = () => { request.post({uri: 'http://www.test.com/'}); }
       fun.should.throw(/POST/);
     });
 
-    it ('a request using the HTTP module', function() {
-      let fun = function() { http.request({host: 'www.test.com', port: 80, path: '/', method: 'GET'}); }
+    it ('a request using the HTTP module', () => {
+      let fun = () => { http.request({host: 'www.test.com', port: 80, path: '/', method: 'GET'}); }
       fun.should.throw(/GET/);
     });
 
-    it ('a request using the HTTPS module', function() {
-      let fun = function() { https.request({host: 'www.test.com', port: 80, path: '/', method: 'GET'}); }
+    it ('a request using the HTTPS module', () => {
+      let fun = () => { https.request({host: 'www.test.com', port: 80, path: '/', method: 'GET'}); }
       fun.should.throw(/GET/);
     });
   });
 
-  it('will not fail to intercept calls made using request directly', function(done) {
+  it('will not fail to intercept calls made using request directly', done => {
     fakeweb.registerUri({uri: 'http://www.readme.com/', file: path.join(__dirname, 'fixtures', 'README.md')});
-    request('http://www.readme.com/', function(err, resp, body) {
+    request('http://www.readme.com/', (err, resp, body) => {
       body.should.equal(fixture);
       done();
     }); 
   });
 
-  it('will allow connections to local resources if allowNetConnect is set to true', function() {
+  it('will allow connections to local resources if allowNetConnect is set to true', () => {
     fakeweb.allowLocalConnect = true;
-    let fun = function() { request.get({uri: 'http://localhost:4324'}, function() {} ); }
+    let fun = () => { request.get({uri: 'http://localhost:4324'}, () => {} ); }
     fun.should.not.throw();
   });
 
-  it('will allow connections to URLs specifically defined as ignored when allowNetConnect is off', function() {
+  it('will allow connections to URLs specifically defined as ignored when allowNetConnect is off', () => {
     fakeweb.ignoreUri({uri: 'http://www.google.com:80/'});
-    let fun = function() { request.get({uri: 'http://www.google.com/'}, function() {} ); }
+    let fun = () => { request.get({uri: 'http://www.google.com/'}, () => {} ); }
     fun.should.not.throw();
   });
 
-  it ('will allow users to register a URI that will throw ECONNREFUSED with request', function() {
+  it('will allow users to register a URI that will throw ECONNREFUSED with request', () => {
     fakeweb.registerUri({uri: 'http://www.google.com/exception', exception: true});
-    let fun = function() { request.get({uri: 'http://www.google.com/exception'}, function() {} ); }
+    let fun = () => { request.get({uri: 'http://www.google.com/exception'}, () => {} ); }
     fun.should.throw(/ECONNREFUSED/);
   });
 
-  it ('will allow users to register a URI that will throw ECONNREFUSED via http module', function(done) {
+  it('will allow users to register a URI that will throw ECONNREFUSED via http module', done => {
     fakeweb.registerUri({uri: 'http://www.google.com:80/exception', exception: true});
     let req = http.request({host: 'www.google.com', port: '80', path: '/exception', method: 'GET'}, res => {
-      res.on('error', function(err) {
+      res.on('error', err => {
         err.code.should.equal('ECONNREFUSED');
         done();
       });
     }); 
     req.end();
   });
-});
 
-//   "will allow users to register a URI that will throw" : {
-//     topic: function() {
-//       var self = this;
-//       fakeweb.registerUri({uri: 'http://www.google.com:80/exception', exception: true});
-//       var req = http.request({host: 'www.google.com', port: '80', path: '/exception', method: 'GET'}, function(res) {
-//         res.on('error', function(err) {
-//           self.callback(err);
-//         });
-//       });
-//       req.end();
-//     },
-//     'ECONNREFUSED via http module': function(err, resp, data) {
-//       assert.equal(err.code, 'ECONNREFUSED');
-//     }
-//   },
-//   'will set content type ' : {
-//     'with request' : {
-//       topic: function() {
-//         fakeweb.registerUri({uri: 'http://www.contenttype.com:80/', body: 'body', contentType: 'testing'});
-//         request.get({uri: 'http://www.contenttype.com:80/'}, this.callback); 
-//       },
-//       "correctly on the response" : function(err, resp, body) {
-//         assert.equal(resp.headers['content-type'], 'testing');
-//       }
-//     },
-//     'with http' : {
-//       topic: function() {
-//         fakeweb.registerUri({uri: 'http://www.contenttype.com:80/', body: 'body', contentType: 'testing'});
-//         var self = this;
-//         var data = '';
-//         var req = http.request({host: 'www.contenttype.com', port: '80', path: '/', method: 'GET'}, function(res) {
-//           res.on('data', function(chunk) {
-//             data += chunk;
-//           });
-//           res.on('close', function() {
-//             self.callback(undefined, res, data);
-//           });
-//         });
-//         req.end();
-//       },
-//       "correctly on the response" : function(err, resp, data) {
-//         assert.equal(resp.headers['content-type'], 'testing');
-//         assert.equal(data, 'body');
-//       }
-//     }
-//   },
-//   'can set arbitrary headers ' : {
-//     'with request' : {
-//       topic: function() {
-//         fakeweb.registerUri({uri: 'http://www.contenttype.com:80/', body: 'body', headers: {location: 'testing'}});
-//         request.get({uri: 'http://www.contenttype.com:80/'}, this.callback); 
-//       },
-//       "correctly on the response" : function(err, resp, body) {
-//         assert.equal(resp.headers['location'], 'testing');
-//       }
-//     },
-//     'with http' : {
-//       topic: function() {
-//         fakeweb.registerUri({uri: 'http://www.contenttype.com:80/', body: 'body', headers: {location: 'testing'}});
-//         var self = this;
-//         var data = '';
-//         var req = http.request({host: 'www.contenttype.com', port: '80', path: '/', method: 'GET'}, function(res) {
-//           res.on('data', function(chunk) {
-//             data += chunk;
-//           });
-//           res.on('close', function() {
-//             self.callback(undefined, res, data);
-//           });
-//         });
-//         req.end();
-//       },
-//       "correctly on the response" : function(err, resp, data) {
-//         assert.equal(resp.headers['location'], 'testing');
-//         assert.equal(data, 'body');
-//       }
-//     }
-//   },
-//   "won't truncate " : {
-//     topic: function() {
-//       fakeweb.registerUri({uri: 'http://www.testingimages.com/grimace.jpg', binaryFile: path.join(__dirname, 'fixtures', 'grimace.jpg'), contentType: 'image/jpeg'});
-//       request.get({uri: 'http://www.testingimages.com/grimace.jpg'}, this.callback); 
-//     },
-//     'binary files' : function(err, resp, body) {
-//       assert.equal(body, fs.readFileSync(path.join(__dirname, 'fixtures', 'grimace.jpg'), 'binary'));
-//     }
-//   },
-//   "will prefer hostname over host in http request options": {
-//     topic: function() {
-//       var self = this;
-//       var data = '';
-//       fakeweb.registerUri({uri: 'http://hostname.com:80/', body: 'hostname'});
-//       var req = http.request({hostname: 'hostname.com', host: 'hostname.com:80', port: '80', path: '/', method: 'GET'}, function(res) {
-//         res.on('data', function(chunk) {
-//           data += chunk;
-//         });
-//         res.on('close', function() {
-//           self.callback(undefined, res, data);
-//         });
-//       });
-//       req.end();
-//     },
-//     "correctly on the response" : function(err, resp, body) {
-//       assert.equal(resp.statusCode, 200);
-//     }
-//   },
-//   "will prefer hostname over host in https request options": {
-//     topic: function() {
-//       var self = this;
-//       var data = '';
-//       fakeweb.registerUri({uri: 'https://hostname.com:80/', body: 'hostname'});
-//       var req = https.request({hostname: 'hostname.com', host: 'hostname.com:80', port: '80', path: '/', method: 'GET'}, function(res) {
-//         res.on('data', function(chunk) {
-//           data += chunk;
-//         });
-//         res.on('close', function() {
-//           self.callback(undefined, res, data);
-//         });
-//       });
-//       req.end();
-//     },
-//     "correctly on the response" : function(err, resp, body) {
-//       assert.equal(resp.statusCode, 200);
-//     }
-//   },
-//   "returns a pipable object from pipe": {
-//     topic: function() {
-//       var self = this;
-//       var outputStream = "";
-//
-//       fakeweb.registerUri({uri: "http://bitpay.com/api/rates", body: "spoofed value"});
-//
-//       var req = http.get("http://bitpay.com/api/rates", function(res) {
-//         outputStream = res.pipe(fs.createWriteStream('tmpfile.txt'));
-//         res.on('end', function() {
-//           self.callback(undefined, res, outputStream);
-//         });
-//       });
-//     },
-//     "successfully" : function(err, resp, outputStream) {
-//       assert.notEqual(typeof(outputStream), undefined);
-//       fs.unlink('tmpfile.txt');
-//       outputStream.close();
-//     }
-//   },
-//   "works with http.get when just passing a url": {
-//     topic: function() {
-//       var self = this;
-//       var data = "";
-//
-//       fakeweb.registerUri({uri: "http://bitpay.com/api/rates", body: "spoofed value"});
-//
-//       var req = http.get("http://bitpay.com/api/rates", function(res) {
-//         res.on("data", function (chunk) { data += chunk; });
-//         res.on('end', function() {
-//           self.callback(undefined, res, data);
-//         });
-//       });
-//     },
-//     "successfully" : function(err, resp, body) {
-//       assert.equal(body, 'spoofed value');
-//     }
-//
-//   },
-//   "matches regexes as well as actual urls": {
-//     topic: function() {
-//       var self = this;
-//       var data = "";
-//
-//       fakeweb.registerUri({uri: /testing.com/, body: "Hello!"});
-//       var req = http.get("http://testing.com/some_url", function(res) {
-//         res.on("data", function (chunk) { data += chunk; });
-//         res.on('end', function() {
-//           self.callback(undefined, res, data);
-//         });
-//       });
-//     },
-//     "successfully" : function(err, resp, body) {
-//       assert.equal(body, 'Hello!');
-//     }
-//   },
-//   "works with https.get": {
-//     topic: function() {
-//       var self = this;
-//       var data = "";
-//
-//       fakeweb.registerUri({uri: "https://bitpay.com/api/rates", body: "spoofed value"});
-//
-//       var req = https.get("https://bitpay.com/api/rates", function(res) {
-//         res.on("data", function (chunk) { data += chunk; });
-//         res.on('end', function() {
-//           self.callback(undefined, res, data);
-//         });
-//       });
-//     },
-//     "successfully" : function(err, resp, body) {
-//       assert.equal(body, 'spoofed value');
-//     }
-//   },
-//   "works properly with request.post": {
-//     topic: function() {
-//       fakeweb.registerUri({uri: 'http://www.readme.com/', file: path.join(__dirname, 'fixtures', 'README.md'), method: 'POST', statusCode: 301});
-//       request.post('http://www.readme.com/', this.callback);
-//     },
-//     "successfully" : function(err, resp, body) {
-//       assert.equal(resp.statusCode, 301);
-//       assert.equal(body, fixture);
-//     }
-//   },
-//   "will pass on post-data to body-handler if it is a function": {
-//     topic: function() {
-//       fakeweb.registerUri({uri: 'http://www.readme.com/', body: function (postData){ return postData; }});
-//       request.post({uri: 'http://www.readme.com/', form: {test: 'yes'}}, this.callback);
-//     },
-//     "successfully" : function(err, resp, body) {
-//       assert.equal(resp.statusCode, 200);
-//       assert.deepEqual(body, {test: 'yes'});
-//     }
-//   },
-//   "will follow redirects": {
-//     topic: function() {
-//       fakeweb.registerUri({uri: 'http://redirect.com/redirect', statusCode: 301, headers: {Location: '/redirect-target'}, body: ''});
-//       fakeweb.registerUri({uri: 'http://redirect.com/redirect-target', statusCode: 200, body: 'body'});
-//       request.get({uri: 'http://redirect.com/redirect'}, this.callback); 
-//     },
-//     'with request' : function(err, resp, body) {
-//       assert.equal(resp.statusCode, 200);
-//       assert.equal(body, 'body');
-//     }
-//   },
-//   "will not follow redirects if request option is set": {
-//     topic: function() {
-//       fakeweb.registerUri({uri: 'http://redirect.com/redirect', statusCode: 301, headers: {Location: '/redirect-target'}, body: ''});
-//       fakeweb.registerUri({uri: 'http://redirect.com/redirect-target', statusCode: 200, body: 'body'});
-//       request.get({uri: 'http://redirect.com/redirect', followRedirect: false}, this.callback); 
-//     },
-//     'with request' : function(err, resp, body) {
-//       assert.equal(resp.statusCode, 301);
-//     }
-//   },
-//   "will respect an array status codes with only one element": {
-//     topic: function() {
-//       fakeweb.registerUri({uri: 'http://status-codes.com/oneCodeArray', statusCode: [200] });
-//       request.get({uri: 'http://status-codes.com/oneCodeArray' }, this.callback); 
-//     },
-//     'with request' : function(err, resp, body) {
-//       assert.equal(resp.statusCode, 200);
-//     }
-//   },
-//   "will respect an array status codes with multiple elements": {
-//     topic: function() {
-//       fakeweb.registerUri({uri: 'http://status-codes.com/twoCodeArray', statusCode: [200, 404] });
-//       request.get({uri: 'http://status-codes.com/twoCodeArray' }, this.callback); 
-//     },
-//     'with two request' : function(err, resp, body) {
-//       assert.equal(resp.statusCode, 200);
-//
-//       request.get({uri: 'http://status-codes.com/twoCodeArray' }, function(err, resp, body) {
-//         assert.equal(resp.statusCode, 404);
-//       });
-//     }
-//   },
-//   "will respect an array status codes with multiple elements and will keep returning the last entry once we go over the whole array": {
-//     topic: function() {
-//       fakeweb.registerUri({uri: 'http://status-codes.com/twoCodeArray', statusCode: [200, 404] });
-//       request.get({uri: 'http://status-codes.com/twoCodeArray' }, this.callback); 
-//     },
-//     'with three request' : function(err, resp, body) {
-//       assert.equal(resp.statusCode, 200);
-//
-//       request.get({uri: 'http://status-codes.com/twoCodeArray' }, function(err, resp, body) {
-//         assert.equal(resp.statusCode, 404);
-//
-//         request.get({uri: 'http://status-codes.com/twoCodeArray' }, function(err, resp, body) {
-//           assert.equal(resp.statusCode, 404);
-//         });
-//       });
-//     }
-//   },
-//   "will return a spy for easy testing": {
-//     topic: function() {
-//       spy = fakeweb.registerUri({uri: 'http://www.readme.com/', body: ''});
-//       request.post({uri: 'http://www.readme.com/'}, this.callback);
-//     },
-//     "successfully" : function(err, resp, body) {
-//       assert.equal(resp.statusCode, 200);
-//       assert(spy.used);
-//       assert.equal(spy.useCount, 1);
-//     }
-//   },
-//   "will return a spy that contains posted data": {
-//     topic: function() {
-//       spy2 = fakeweb.registerUri({uri: 'http://www.readme.com/', body: ''});
-//       request.post({uri: 'http://www.readme.com/', body: 'hi'}, this.callback);
-//     },
-//     "successfully": function(err, resp, body) {
-//       assert.equal(spy2.body, 'hi');
-//     }
-//   },
-//   'will return a spy from http.requests that contains posted data': {
-//     topic: function() {
-//       var self = this;
-//       var data = '';
-//       spy3 = fakeweb.registerUri({uri: 'http://www.readme.com:80/post', method: 'POST', body: 'hi'});
-//       var req = http.request({host: 'www.readme.com', port: '80', path: '/post', method: 'POST'}, function(res) {
-//         res.on('data', function(chunk) {
-//           data += chunk;
-//         });
-//         res.on('close', function() {
-//           self.callback(undefined, data);
-//         });
-//       });
-//       req.write('hi', 'utf8', () => {
-//         req.end();
-//       });
-//     },
-//     "successfully": function(err, resp) {
-//       assert.equal(resp, 'hi');
-//       assert.equal(spy3.body, 'hi');
-//     }
-//   }
-// }).export(module);
+  describe('will set content type', () => {
+    it('with request', done => {
+      fakeweb.registerUri({uri: 'http://www.contenttype.com:80/', body: 'body', contentType: 'testing'});
+      request.get({uri: 'http://www.contenttype.com:80/'}, (err, resp, body) => {
+        resp.headers['content-type'].should.equal('testing');
+        done();
+      });
+    });
+
+    it ('with http module', done => {
+      fakeweb.registerUri({uri: 'http://www.contenttype.com:80/', body: 'body', contentType: 'testing'});
+      let req = http.request({host: 'www.contenttype.com', port: '80', path: '/', method: 'GET'}, res => {
+        res.on('data', chunk => { data += chunk; });
+        res.on('close', () => {
+          res.headers['content-type'].should.equal('testing');
+          data.should.equal('body');
+          done();
+        });
+      });
+      req.end();
+    });
+  });
+
+  describe('can set arbitrary headers', () => {
+    it('with request', done => {
+      fakeweb.registerUri({uri: 'http://www.contenttype.com:80/', body: 'body', headers: {location: 'testing'}});
+      request.get({uri: 'http://www.contenttype.com:80/'}, (err, resp, body) => {
+        resp.headers['location'].should.equal('testing');
+        done();
+      });
+    });
+
+    it('with http', done => {
+      fakeweb.registerUri({uri: 'http://www.contenttype.com:80/', body: 'body', headers: {location: 'testing'}});
+      let req = http.request({host: 'www.contenttype.com', port: '80', path: '/', method: 'GET'}, res => {
+        res.on('data', chunk => { data += chunk; });
+        res.on('close', () => {
+          res.headers['location'].should.equal('testing');
+          data.should.equal('body');
+          done();
+        });
+      });
+      req.end();
+    });
+  });
+
+  it("won't truncate binary files", done => {
+    fakeweb.registerUri({uri: 'http://www.testingimages.com/grimace.jpg', binaryFile: path.join(__dirname, 'fixtures', 'grimace.jpg'), contentType: 'image/jpeg'});
+    request.get({uri: 'http://www.testingimages.com/grimace.jpg'}, (err, resp, body) => {
+      body.should.equal(fs.readFileSync(path.join(__dirname, 'fixtures', 'grimace.jpg'), 'binary'));
+      done();
+    });
+  });
+
+  it('returns a pipable object from pipe', done => {
+    let outputStream = '';
+    fakeweb.registerUri({uri: 'http://bitpay.com/api/rates', body: 'spoofed value'});
+    let req = http.get('http://bitpay.com/api/rates', res => {
+      outputStream = res.pipe(fs.createWriteStream('tmpfile.txt'));
+      res.once('end', () => {
+        should.exist(typeof(outputStream));
+        fs.unlink('tmpfile.txt');
+      });
+    });
+    req.end();
+    done();
+  });
+
+  it('works properly with http.get', done => {
+    fakeweb.registerUri({uri: 'http://bitpay.com/api/rates', body: 'spoofed value'});
+
+    let req = http.get('http://bitpay.com/api/rates', res => {
+      res.on('data', chunk => { data += chunk; });
+      res.on('end', () => {
+        data.should.equal('spoofed value');
+        done();
+      });
+    });
+  });
+
+  it('works properly with https.get', done => {
+    fakeweb.registerUri({uri: 'https://bitpay.com/api/rates', body: 'spoofed value'});
+
+    let req = https.get('https://bitpay.com/api/rates', res => {
+      res.on('data', chunk => { data += chunk; });
+      res.on('end', () => {
+        data.should.equal('spoofed value');
+        done();
+      });
+    });
+    req.end();
+  });
+
+  it('matches regexes as well as regular urls', done => {
+    fakeweb.registerUri({uri: /testing.com/, body: 'Hello!'});
+    let req = http.get('http://testing.com/some_url', res => {
+      res.on('data', chunk => { data += chunk; });
+      res.on('end', () => {
+        data.should.equal('Hello!');
+        done();
+      });
+    });
+    req.end();
+  });
+
+  it('works properly with request.post', done => {
+    fakeweb.registerUri({uri: 'http://www.readme.com/', file: path.join(__dirname, 'fixtures', 'README.md'), method: 'POST', statusCode: 301});
+    request.post('http://www.readme.com/', (err, resp, body) => {
+      resp.statusCode.should.equal(301);
+      body.should.equal(fixture);
+      done();
+    });
+  });
+
+  it('will pass on posted data to body-handler if it is a function', done => {
+    fakeweb.registerUri({uri: 'http://www.readme.com/', body: postData => { return postData; } });
+    request.post({uri: 'http://www.readme.com/', form: {test: 'yes'}}, (err, resp, body) => {
+      resp.statusCode.should.equal(200);
+      body.test.should.equal('yes');
+      done();
+    });
+  });
+
+  it('will follow redirects', done => {
+    fakeweb.registerUri({uri: 'http://redirect.com/redirect', statusCode: 301, headers: {Location: '/redirect-target'}, body: ''});
+    fakeweb.registerUri({uri: 'http://redirect.com/redirect-target', statusCode: 200, body: 'body'});
+    request.get({uri: 'http://redirect.com/redirect'}, (err, resp, body) => {
+      resp.statusCode.should.equal(200);
+      body.should.equal('body');
+      done();
+    });
+  });
+
+  it('will not follow redirects if request option is set', done => {
+    fakeweb.registerUri({uri: 'http://redirect.com/redirect', statusCode: 301, headers: {Location: '/redirect-target'}, body: ''});
+    fakeweb.registerUri({uri: 'http://redirect.com/redirect-target', statusCode: 200, body: 'body'});
+    request.get({uri: 'http://redirect.com/redirect', followRedirect: false}, (err, resp, body) => {
+      resp.statusCode.should.equal(301);
+      body.should.not.equal('body');
+      done();
+    });
+  });
+
+  it('will work with an array of status codes', done => {
+    fakeweb.registerUri({uri: 'http://status-codes.com/oneCodeArray', statusCode: [200] });
+    request.get({uri: 'http://status-codes.com/oneCodeArray'}, (err, resp, body) => {
+      resp.statusCode.should.equal(200);
+      done();
+    });
+  });
+
+  it('will work through all the status codes in order, then continue to return the last value', done => {
+    fakeweb.registerUri({uri: 'http://status-codes.com/twoCodeArray', statusCode: [200, 404] });
+    request.get({uri: 'http://status-codes.com/twoCodeArray' }, (err, resp, body) => {
+      resp.statusCode.should.equal(200);
+      request.get({uri: 'http://status-codes.com/twoCodeArray' }, (err, resp, body) => {
+        resp.statusCode.should.equal(404);
+        request.get({uri: 'http://status-codes.com/twoCodeArray' }, (err, resp, body) => {
+          resp.statusCode.should.equal(404);
+          done();
+        });
+      });
+    });
+  });
+
+  describe('supports spies', () => {
+    it('that will be returned for easy testing', done => {
+      let spy = fakeweb.registerUri({uri: 'http://www.readme.com/', body: ''});
+      request.post({uri: 'http://www.readme.com/'}, (err, resp, body) => {
+        resp.statusCode.should.equal(200);
+        spy.used.should.equal(true);
+        spy.useCount.should.equal(1);
+        done();
+      });
+    });
+
+    it('that contain the posted data', done => {
+      let spy = fakeweb.registerUri({uri: 'http://www.readme.com/', body: ''});
+      request.post({uri: 'http://www.readme.com/', body: 'hi'}, (err, resp, body) => {
+        spy.body.should.equal('hi');
+        done();
+      });
+    });
+
+    it('that work properly for request made with http as well', done => {
+      let spy = fakeweb.registerUri({uri: 'http://www.readme.com/post', method: 'POST', body: 'hi'});
+      let req = http.request({host: 'www.readme.com', port: '80', path: '/post', method: 'POST'}, res => {
+        res.on('data', chunk => { data += chunk; });
+        res.on('close', () => {
+          data.should.equal('hi');
+          spy.body.should.equal('hello');
+          done();
+        });
+      });
+      req.write('hello', 'utf8', () => {
+        req.end();
+      });
+    });
+  });
+});
