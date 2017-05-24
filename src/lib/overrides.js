@@ -110,7 +110,8 @@ function requestGet(options, callback) {
     if (fakewebOptions.contentType) {
       resp.headers['content-type'] = fakewebOptions.contentType;
     }
-    return callback(null, resp, fakewebOptions.response());
+    const body = options.json ? JSON.parse(fakewebOptions.response()) : fakewebOptions.response();
+    return callback(null, resp, body);
   }
   return oldRequestGet.call(request, options, callback);
 }
@@ -136,7 +137,8 @@ function requestPost(options, callback) {
     if (fakewebOptions.contentType) {
       resp.headers['content-type'] = fakewebOptions.contentType;
     }
-    return callback(null, resp, fakewebOptions.response(options.form));
+    const body = options.json ? JSON.parse(fakewebOptions.response(options.form)) : fakewebOptions.response(options.form);
+    return callback(null, resp, body);
   }
   return oldRequestPost.call(request, options, callback);
 }

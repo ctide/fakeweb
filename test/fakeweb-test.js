@@ -247,6 +247,24 @@ describe('fakeweb', () => {
     });
   });
 
+  it('will JSON parse the contents if json is set to true with request', done => {
+    fakeweb.registerUri({uri: 'http://jsontrue.com/', statusCode: 200, file: path.join(__dirname, 'fixtures', 'test.json')});
+    request.get({uri: 'http://jsontrue.com', json: true}, (err, resp, body) => {
+      resp.statusCode.should.equal(200);
+      body.test.should.equal('worked');
+      done();
+    });
+  });
+
+  it('will JSON parse the contents if json is set to true with request posts', done => {
+    fakeweb.registerUri({uri: 'http://jsontrue.com/', statusCode: 200, file: path.join(__dirname, 'fixtures', 'test.json')});
+    request.post({uri: 'http://jsontrue.com', json: true}, (err, resp, body) => {
+      resp.statusCode.should.equal(200);
+      body.test.should.equal('worked');
+      done();
+    });
+  });
+
   it('will work with an array of status codes', done => {
     fakeweb.registerUri({uri: 'http://status-codes.com/oneCodeArray', statusCode: [200] });
     request.get({uri: 'http://status-codes.com/oneCodeArray'}, (err, resp, body) => {
